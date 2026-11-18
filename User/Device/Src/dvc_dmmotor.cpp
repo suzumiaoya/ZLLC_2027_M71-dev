@@ -134,7 +134,247 @@ uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID)
         break;
         }
     }
+    else if (hcan == &hfdcan3)
+    {
+        switch (__CAN_ID)
+        {
+        case (DM_Motor_ID_0xA1):
+            tmp_tx_data_ptr = CAN3_0xxf1_Tx_Data;
+            break;
+        case (DM_Motor_ID_0xA2):
+            tmp_tx_data_ptr = CAN3_0xxf2_Tx_Data;
+            break;
+        case (DM_Motor_ID_0xA3):
+            tmp_tx_data_ptr = CAN3_0xxf3_Tx_Data;
+            break;
+        case (DM_Motor_ID_0xA4):
+            tmp_tx_data_ptr = CAN3_0xxf4_Tx_Data;
+            break;
+        case (DM_Motor_ID_0xA5):
+            tmp_tx_data_ptr = CAN3_0xxf5_Tx_Data;
+            break;
+        case (DM_Motor_ID_0xA6):
+            tmp_tx_data_ptr = CAN3_0xxf6_Tx_Data;
+            break;
+        case (DM_Motor_ID_0xA7):
+            tmp_tx_data_ptr = CAN3_0xxf7_Tx_Data;
+            break;
+        case (DM_Motor_ID_0xA8):
+            tmp_tx_data_ptr = CAN3_0xxf8_Tx_Data;
+            break;
+        }
+    }
     return (tmp_tx_data_ptr);
+}
+
+Enum_DM_Motor_Status Class_DM_Motor::Get_DM_Motor_Status()
+{
+        return (DM_Motor_Status);
+}
+
+Enum_DM_Motor_Control_Status Class_DM_Motor::Get_DM_Motor_Control_Status()
+{
+        return (DM_Motor_Control_Status);
+}
+
+Enum_DM_Motor_ErrorCode Class_DM_Motor::Get_ErrorCode()
+{
+        return (Data.ErrorCode);
+}
+
+float Class_DM_Motor::Get_Now_Angle()
+{
+        return (Data.Now_Angle);
+}
+
+float Class_DM_Motor::Get_Now_Omega()
+{
+        return (Data.Now_Omega);
+}
+
+float Class_DM_Motor::Get_Now_Torque()
+{
+        return (Data.Now_Torque);
+}
+
+float Class_DM_Motor::Get_Now_MOS_Temperature()
+{
+        return (Data.Now_MOS_Temperature);
+}
+
+float Class_DM_Motor::Get_Now_Rotor_Temperature()
+{
+        return (Data.Now_Rotor_Temperature);
+}
+
+Enum_DM_Motor_Control_Method Class_DM_Motor::Get_Control_Method()
+{
+        return (DM_Motor_Control_Method);
+}
+
+float Class_DM_Motor::Get_MIT_K_P()
+{
+        return (MIT_K_P);
+}
+
+float Class_DM_Motor::Get_MIT_K_D()
+{
+        return (MIT_K_D);
+}
+
+float Class_DM_Motor::Get_Target_Angle()
+{
+        return (Target_Angle);
+}
+
+float Class_DM_Motor::Get_Target_Omega()
+{
+        return (Target_Omega);
+}
+
+float Class_DM_Motor::Get_Target_Torque()
+{
+        return (Target_Torque);
+}
+
+void Class_DM_Motor::Set_DM_Control_Status(Enum_DM_Motor_Control_Status __Control_Status)
+{
+        DM_Motor_Control_Status = __Control_Status;
+}
+
+void Class_DM_Motor::Set_DM_Motor_Control_Method(Enum_DM_Motor_Control_Method __Control_Method)
+{
+        DM_Motor_Control_Method = __Control_Method;
+}
+
+void Class_DM_Motor::Set_MIT_K_P(float __MIT_K_P)
+{
+        MIT_K_P = __MIT_K_P;
+}
+
+void Class_DM_Motor::Set_MIT_K_D(float __MIT_K_D)
+{
+        MIT_K_D = __MIT_K_D;
+}
+
+void Class_DM_Motor::Set_Target_Angle(float __Target_Angle)
+{
+        Target_Angle = __Target_Angle;
+}
+
+void Class_DM_Motor::Set_Target_Omega(float __Target_Omega)
+{
+        Target_Omega = __Target_Omega;
+}
+
+void Class_DM_Motor::Set_Target_Torque(float __Target_Torque)
+{
+        Target_Torque = __Target_Torque;
+}
+
+/**
+ * @brief 初始化达妙电机的CAN绑定、控制方式及协议量程
+ */
+void Class_DM_Motor::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method, float __Omega_Max, float __Torque_Max, float __Angle_Max)
+{
+    if (hcan->Instance == FDCAN1)
+    {
+        CAN_Manage_Object = &CAN1_Manage_Object;
+    }
+    else if (hcan->Instance == FDCAN2)
+    {
+        CAN_Manage_Object = &CAN2_Manage_Object;
+    }
+    else if (hcan->Instance == FDCAN3)
+    {
+        CAN_Manage_Object = &CAN3_Manage_Object;
+    }
+    CAN_ID = __CAN_ID;
+    DM_Motor_Control_Method = __Control_Method;
+    Omega_Max = __Omega_Max;
+    Torque_Max = __Torque_Max;
+    Angle_Max = __Angle_Max;
+    CAN_Tx_Data = allocate_tx_data(hcan, __CAN_ID);
+}
+
+/**
+ * @brief 解码达妙电机反馈, 位置、速度和扭矩暂按驱动器反馈轴侧保存
+ */
+void Class_DM_Motor::Data_Process(uint8_t *Rx_Data)
+{
+    uint16_t tmp_position = (Rx_Data[1] << 8) | Rx_Data[2];
+    uint16_t tmp_omega = (Rx_Data[3] << 4) | (Rx_Data[4] >> 4);
+    uint16_t tmp_torque = ((Rx_Data[4] & 0x0f) << 8) | Rx_Data[5];
+
+    Data.CAN_ID = static_cast<Enum_DM_Motor_ID>(Rx_Data[0] & 0x0f);
+    Data.ErrorCode = static_cast<Enum_DM_Motor_ErrorCode>(Rx_Data[0] >> 4);
+    Data.Now_Angle = Math_Int_To_Float(tmp_position, 0, (1 << 16) - 1, -Angle_Max, Angle_Max);
+    Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0, (1 << 12) - 1, -Omega_Max, Omega_Max);
+    Data.Now_Torque = Math_Int_To_Float(tmp_torque, 0, (1 << 12) - 1, -Torque_Max, Torque_Max);
+    Data.Now_MOS_Temperature = Rx_Data[6];
+    Data.Now_Rotor_Temperature = Rx_Data[7];
+}
+
+/**
+ * @brief CAN通信接收回调函数
+ */
+void Class_DM_Motor::CAN_RxCpltCallback(uint8_t *Rx_Data)
+{
+    if (Rx_Data == nullptr)
+    {
+        return;
+    }
+
+    Data_Process(Rx_Data);
+    Flag++;
+}
+
+/**
+ * @brief 更新在线状态, 按软件控制请求发送使能或失能帧
+ */
+void Class_DM_Motor::TIM_Alive_PeriodElapsedCallback()
+{
+    uint32_t current_flag = Flag;
+    DM_Motor_Status = (current_flag == Pre_Flag) ? DM_Motor_Status_DISABLE : DM_Motor_Status_ENABLE;
+    Pre_Flag = current_flag;
+
+    if (CAN_Manage_Object == nullptr)
+    {
+        return;
+    }
+
+    // 沿用现有电机ID槽位和控制帧偏移
+    uint16_t tx_id = CAN_ID;
+    switch (DM_Motor_Control_Method)
+    {
+    case DM_Motor_Control_Method_MIT_POSITION:
+    case DM_Motor_Control_Method_MIT_OMEGA:
+    case DM_Motor_Control_Method_MIT_ANGLE:
+    case DM_Motor_Control_Method_MIT_IMU_Angle:
+    case DM_Motor_Control_Method_MIT_OPENLOOP:
+        tx_id += 0xf0;
+        break;
+    case DM_Motor_Control_Method_POSITION_OMEGA:
+        tx_id += 0x1f0;
+        break;
+    case DM_Motor_Control_Method_OMEGA:
+        tx_id += 0x2f0;
+        break;
+    default:
+        return;
+    }
+
+    uint8_t *tx_data = (DM_Motor_Control_Status == DM_Motor_Control_Status_ENABLE) ?
+                       DM_Motor_CAN_Message_Enter : DM_Motor_CAN_Message_Exit;
+    CAN_Send_Data(CAN_Manage_Object->CAN_Handler, tx_id, tx_data, 8);
+}
+
+/**
+ * @brief 默认周期处理, 由具体型号发送控制帧
+ */
+void Class_DM_Motor::TIM_PID_PeriodElapsedCallback()
+{
+    TIM_Process_PeriodElapsedCallback();
 }
 
 /**
@@ -156,6 +396,10 @@ void Class_DM_Motor_J4310::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CA
     else if (hcan->Instance == FDCAN2)
     {
         CAN_Manage_Object = &CAN2_Manage_Object;
+    }
+    else if (hcan->Instance == FDCAN3)
+    {
+        CAN_Manage_Object = &CAN3_Manage_Object;
     }
     CAN_ID = __CAN_ID;
     DM_Motor_Control_Method = __Control_Method;
@@ -546,4 +790,234 @@ void Class_DM_Motor_J4310::Output()
         }
     }
 }
+
+/**
+ * @brief 获取电机状态
+ *
+ * @return Enum_DM_Motor_Status 电机状态
+ */
+Enum_DM_Motor_Status Class_DM_Motor_J4310::Get_DM_Motor_Status()
+{
+    return (DM_Motor_Status);
+}
+
+/**
+ * @brief 获取当前的角度, rad
+ *
+ * @return float 当前的角度, rad
+ */
+float Class_DM_Motor_J4310::Get_Now_Angle()
+{
+    return (Data.Now_Angle);
+}
+
+/**
+ * @brief 获取当前的速度, rad/s
+ *
+ * @return float 当前的速度, rad/s
+ */
+float Class_DM_Motor_J4310::Get_Now_Omega()
+{
+    return (Data.Now_Omega);
+}
+
+/**
+ * @brief 获取当前的扭矩, 直接采用反馈值
+ *
+ * @return float 当前的扭矩, 直接采用反馈值
+ */
+float Class_DM_Motor_J4310::Get_Now_Torque()
+{
+    return (Data.Now_Torque);
+}
+
+/**
+ * @brief 获取当前MOS管的温度, 摄氏度
+ *
+ * @return float 当前MOS管的温度, 摄氏度
+ */
+float Class_DM_Motor_J4310::Get_Now_MOS_Temperature()
+{
+    return (Data.Now_MOS_Temperature);
+}
+
+/**
+ * @brief 获取当前绕组的温度, 摄氏度
+ *
+ * @return float 当前绕组的温度, 摄氏度
+ */
+float Class_DM_Motor_J4310::Get_Now_Rotor_Temperature()
+{
+    return (Data.Now_Rotor_Temperature);
+}
+
+/**
+ * @brief 获取电机控制方式
+ *
+ * @return Enum_DM_Motor_Control_Method 电机控制方式
+ */
+Enum_DM_Motor_Control_Method Class_DM_Motor_J4310::Get_Control_Method()
+{
+    return (DM_Motor_Control_Method);
+}
+
+/**
+ * @brief 获取MIT的Kp值, 0~500
+ *
+ * @return float MIT的Kp值, 0~500
+ */
+float Class_DM_Motor_J4310::Get_MIT_K_P()
+{
+    return (MIT_K_P);
+}
+
+/**
+ * @brief 获取MIT的Kd值, 0~5
+ *
+ * @return float MIT的Kd值, 0~5
+ */
+float Class_DM_Motor_J4310::Get_MIT_K_D()
+{
+    return (MIT_K_D);
+}
+
+/**
+ * @brief 获取目标的角度, rad
+ *
+ * @return float 目标的角度, rad
+ */
+float Class_DM_Motor_J4310::Get_Target_Angle()
+{
+    return (Target_Angle);
+}
+
+/**
+ * @brief 获取目标的速度, rad/s
+ *
+ * @return float 目标的速度, rad/s
+ */
+float Class_DM_Motor_J4310::Get_Target_Omega()
+{
+    return (Target_Omega);
+}
+
+/**
+ * @brief 获取目标的扭矩
+ *
+ * @return float 目标的扭矩
+ */
+float Class_DM_Motor_J4310::Get_Target_Torque()
+{
+    return (Target_Torque);
+}
+
+/**
+ * @brief 获取目标的输出
+ *
+ * @return float 目标的输出
+ */
+float Class_DM_Motor_J4310::Get_Out()
+{
+    return (Out);
+}
+
+/**
+ * @brief 设定电机控制状态
+ *
+ * @param __DM_Motor_Control_Status 电机控制状态
+ */
+void Class_DM_Motor_J4310::Set_DM_Control_Status(Enum_DM_Motor_Control_Status __DM_Motor_Control_Status)
+{
+    DM_Motor_Control_Status = __DM_Motor_Control_Status;
+}
+
+/**
+ * @brief 设定电机控制方式
+ *
+ * @param __Control_Method 电机控制方式
+ */
+void Class_DM_Motor_J4310::Set_DM_Motor_Control_Method(Enum_DM_Motor_Control_Method __Control_Method)
+{
+    DM_Motor_Control_Method = __Control_Method;
+}
+
+/**
+ * @brief 设定MIT的Kp值, 0~500, 空载6, 位置控制需要
+ *
+ * @param __MIT_K_P MIT的Kp值, 0~500, 空载6, 位置控制需要
+ */
+void Class_DM_Motor_J4310::Set_MIT_K_P(float __MIT_K_P)
+{
+    MIT_K_P = __MIT_K_P;
+}
+
+/**
+ * @brief 设定MIT的Kd值, 0~5, 空载0.2, 位置和速度控制需要
+ *
+ * @param __MIT_K_D MIT的Kd值, 0~5, 空载0.2, 位置和速度控制需要
+ */
+void Class_DM_Motor_J4310::Set_MIT_K_D(float __MIT_K_D)
+{
+    MIT_K_D = __MIT_K_D;
+}
+
+/**
+ * @brief 设定目标的角度, rad
+ *
+ * @param __Target_Angle 目标的角度, rad
+ */
+void Class_DM_Motor_J4310::Set_Target_Angle(float __Target_Angle)
+{
+    Target_Angle = __Target_Angle;
+}
+
+/**
+ * @brief 设定目标的速度, rad/s
+ *
+ * @param __Target_Omega 目标的速度, rad/s
+ */
+void Class_DM_Motor_J4310::Set_Target_Omega(float __Target_Omega)
+{
+    Target_Omega = __Target_Omega;
+}
+
+/**
+ * @brief 设定目标的扭矩
+ *
+ * @param __Target_Torque 目标的扭矩
+ */
+void Class_DM_Motor_J4310::Set_Target_Torque(float __Target_Torque)
+{
+    Target_Torque = __Target_Torque;
+}
+
+/**
+ * @brief 设定目标的输出
+ *
+ * @param __Out 目标的输出
+ */
+
+void Class_DM_Motor_J4310::Set_Out(float __Out)
+{
+    Out=__Out;
+}
+
+/**
+ * @brief 限制目标的输出
+ *
+ * @param __Out 目标的输出
+ */
+void Class_DM_Motor_J4310::Limit_Out()
+{
+	if(Out>4095)
+		Out=4095;
+	else if(Out<-4095)
+		Out=-4095;
+
+	else
+	{
+
+	}
+}
+
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
