@@ -370,10 +370,56 @@ void Class_DM_Motor::TIM_Alive_PeriodElapsedCallback()
 }
 
 /**
- * @brief 默认周期处理, 由具体型号发送控制帧
+ * @brief 计算默认MIT闭环, 再由具体型号发送控制帧
  */
 void Class_DM_Motor::TIM_PID_PeriodElapsedCallback()
 {
+    switch (DM_Motor_Control_Method)
+    {
+    case (DM_Motor_Control_Method_MIT_POSITION):
+    case (DM_Motor_Control_Method_POSITION_OMEGA):
+    case (DM_Motor_Control_Method_OMEGA):
+    break;
+
+    case (DM_Motor_Control_Method_MIT_OMEGA):
+    {
+        //速度环
+        PID_Omega.Set_Target(Target_Omega);
+        PID_Omega.Set_Now(Data.Now_Omega);
+
+        PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+
+        Target_Torque = PID_Omega.Get_Out();
+    }
+    break;
+
+    case (DM_Motor_Control_Method_MIT_ANGLE):
+    {
+        PID_Angle.Set_Target(Target_Angle);
+        //角度环
+        PID_Angle.Set_Now(Data.Now_Angle);
+        PID_Angle.TIM_Adjust_PeriodElapsedCallback();
+
+        Target_Omega = PID_Angle.Get_Out();
+
+        //速度环
+        PID_Omega.Set_Target(Target_Omega);
+        PID_Omega.Set_Now(Data.Now_Omega);
+
+        PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+
+        Target_Torque = PID_Omega.Get_Out();
+    }
+    break;
+
+    default:
+    {
+        Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+    }
+    break;
+    }
+
+
     TIM_Process_PeriodElapsedCallback();
 }
 

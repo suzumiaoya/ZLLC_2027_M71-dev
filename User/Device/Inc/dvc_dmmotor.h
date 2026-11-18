@@ -51,13 +51,19 @@ enum Enum_DM_Motor_ID : uint8_t
 
 enum Enum_DM_Motor_ErrorCode : uint8_t
 {
-    ERROR_OverVoltage = 8,
-    ERROR_UnderVoltage,
-    ERROR_OverCurrent,
-    ERROR_MOS_OverTemp,
-    ERROR_Motor_OverTemp,
-    ERROR_LossCAN,
-    ERROR_OverLoad,
+    ERROR_Disabled = 0x0,               // 失能
+    ERROR_Enabled = 0x1,                // 使能
+    ERROR_OutputShaftCalibration = 0x3, // 输出轴校准异常
+    ERROR_SensorOutput = 0x4,           // 传感器输出异常
+    ERROR_MotorSensor = 0x5,
+    ERROR_MotorParameterRead = 0x6,     // 读取电机参数错误
+    ERROR_OverVoltage = 0x8,            // 超压
+    ERROR_UnderVoltage = 0x9,           // 欠压
+    ERROR_OverCurrent = 0xA,            // 过电流
+    ERROR_MOS_OverTemp = 0xB,           // MOS 过温
+    ERROR_Motor_OverTemp = 0xC,         // 电机线圈过温
+    ERROR_LossCAN = 0xD,                // 通讯丢失
+    ERROR_OverLoad = 0xE,               // 过载
 };
 
 
@@ -120,6 +126,11 @@ struct Struct_DM_Motor_Feedback
 class Class_DM_Motor
 {
 public:
+
+    // PID角度环控制
+    Class_PID PID_Angle;
+    // PID角速度环控制
+    Class_PID PID_Omega;
 
     virtual ~Class_DM_Motor() = default;
 
