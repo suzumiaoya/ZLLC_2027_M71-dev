@@ -46,20 +46,20 @@ void Class_Gimbal_Pitch_Motor_DM4310::TIM_Alive_PeriodElapsedCallback()
     case DM_Motor_Control_Method_MIT_POSITION:
     case DM_Motor_Control_Method_MIT_OMEGA:
     case DM_Motor_Control_Method_MIT_ANGLE:
-        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID + 0xf0, tx_data, 8);
+        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID, tx_data, 8);
         break;
     case DM_Motor_Control_Method_POSITION_OMEGA:
-        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID + 0x1f0, tx_data, 8);
+        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID + 0x100, tx_data, 8);
         break;
     case DM_Motor_Control_Method_OMEGA:
-        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID + 0x2f0, tx_data, 8);
+        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID + 0x200, tx_data, 8);
         break;
     default:
         break;
     }
 
     // 云台原有策略在每次在线扫描时额外发送MIT使能帧
-    CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID + 0xf0, DM_Motor_CAN_Message_Enter, 8);
+    CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID, DM_Motor_CAN_Message_Enter, 8);
 }
 
 /**
