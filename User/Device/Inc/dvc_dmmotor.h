@@ -170,6 +170,9 @@ public:
     virtual void TIM_Process_PeriodElapsedCallback();
     virtual void TIM_PID_PeriodElapsedCallback();
 
+    // 提交最近一次打包的控制帧, 返回CAN发送状态
+    uint8_t Send_Control_Frame();
+
 protected:
 
     //初始化相关变量
@@ -182,6 +185,9 @@ protected:
     float Torque_Max;
 
     //内部变量
+    // 待发送控制帧的ID和长度, 长度为0表示没有待发送帧
+    uint16_t Control_Tx_ID = 0;
+    uint16_t Control_Tx_Length = 0;
     volatile uint32_t Flag = 0;
     uint32_t Pre_Flag = 0;
 
@@ -199,6 +205,7 @@ protected:
     float Target_Torque = 0.0f;
 
     //内部函数
+    virtual void Pack_Control_Frame();
     // 使用相同反馈协议的子类应先调用父类实现, 再转换到输出轴侧
     virtual void Data_Process(uint8_t *Rx_Data);
 };

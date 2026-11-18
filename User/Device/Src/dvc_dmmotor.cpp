@@ -295,6 +295,7 @@ void Class_DM_Motor::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, 
     Torque_Max = __Torque_Max;
     Angle_Max = __Angle_Max;
     CAN_Tx_Data = allocate_tx_data(hcan, __CAN_ID);
+    Control_Tx_Length = 0;
 }
 
 /**
@@ -436,6 +437,16 @@ void Class_DM_Motor_J4310::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CA
  */
 void Class_DM_Motor::TIM_Process_PeriodElapsedCallback()
 {
+    Pack_Control_Frame();
+    Send_Control_Frame();
+}
+
+/**
+ * @brief 生成控制帧并记录对应的CAN ID和长度
+ */
+void Class_DM_Motor::Pack_Control_Frame()
+{
+    Control_Tx_Length = 0;
     switch (DM_Motor_Control_Method)
     {
     case (DM_Motor_Control_Method_MIT_POSITION):
@@ -477,7 +488,8 @@ void Class_DM_Motor::TIM_Process_PeriodElapsedCallback()
         uint8_t tmp_torque_7_0 = tmp_torque;
         memcpy(&CAN_Tx_Data[7], &tmp_torque_7_0, sizeof(uint8_t));
 
-        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, static_cast<Enum_DM_Motor_ID>(CAN_ID) + 0xf0, CAN_Tx_Data, 8);
+        Control_Tx_ID = CAN_ID + 0xf0;
+        Control_Tx_Length = 8;
     }
     break;
     case (DM_Motor_Control_Method_POSITION_OMEGA):
@@ -486,14 +498,16 @@ void Class_DM_Motor::TIM_Process_PeriodElapsedCallback()
 
         memcpy(&CAN_Tx_Data[4], &Target_Omega, sizeof(float));
 
-        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, static_cast<Enum_DM_Motor_ID>(CAN_ID) + 0x1f0, CAN_Tx_Data, 8);
+        Control_Tx_ID = CAN_ID + 0x1f0;
+        Control_Tx_Length = 8;
     }
     break;
     case (DM_Motor_Control_Method_OMEGA):
     {
         memcpy(&CAN_Tx_Data[0], &Target_Omega, sizeof(float));
 
-        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, static_cast<Enum_DM_Motor_ID>(CAN_ID) + 0x2f0, CAN_Tx_Data, 4);
+        Control_Tx_ID = CAN_ID + 0x2f0;
+        Control_Tx_Length = 4;
     }
     break;
     default:
@@ -501,6 +515,24 @@ void Class_DM_Motor::TIM_Process_PeriodElapsedCallback()
     }
     break;
     }
+}
+
+/**
+ * @brief 提交最近一次生成的控制帧, 提交成功后清除待发送状态
+ */
+uint8_t Class_DM_Motor::Send_Control_Frame()
+{
+    if (Control_Tx_Length == 0)
+    {
+        return (HAL_ERROR);
+    }
+
+    uint8_t status = CAN_Send_Data(CAN_Manage_Object->CAN_Handler, Control_Tx_ID, CAN_Tx_Data, Control_Tx_Length);
+    if (status == HAL_OK)
+    {
+        Control_Tx_Length = 0;
+    }
+    return (status);
 }
 
 void Class_DM_Motor_J4310::Output()
