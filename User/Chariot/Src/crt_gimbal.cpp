@@ -26,6 +26,42 @@ float YAW_Reference_Angle;
 float YAW_Chassis_Angle;
 float DebugMo = 0.0f;
 #define LOCK_Omega 200.0f
+
+extern uint8_t DM_Motor_CAN_Message_Enter[8];
+extern uint8_t DM_Motor_CAN_Message_Exit[8];
+
+/**
+ * @brief 保留云台俯仰电机原有的使能策略
+ */
+void Class_Gimbal_Pitch_Motor_DM4310::TIM_Alive_PeriodElapsedCallback()
+{
+    uint32_t current_flag = Flag;
+    DM_Motor_Status = (current_flag == Pre_Flag) ? DM_Motor_Status_DISABLE : DM_Motor_Status_ENABLE;
+    Pre_Flag = current_flag;
+
+    uint8_t *tx_data = (DM_Motor_Status == DM_Motor_Status_ENABLE) ?
+                       DM_Motor_CAN_Message_Enter : DM_Motor_CAN_Message_Exit;
+    switch (DM_Motor_Control_Method)
+    {
+    case DM_Motor_Control_Method_MIT_POSITION:
+    case DM_Motor_Control_Method_MIT_OMEGA:
+    case DM_Motor_Control_Method_MIT_ANGLE:
+        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID + 0xf0, tx_data, 8);
+        break;
+    case DM_Motor_Control_Method_POSITION_OMEGA:
+        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID + 0x1f0, tx_data, 8);
+        break;
+    case DM_Motor_Control_Method_OMEGA:
+        CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID + 0x2f0, tx_data, 8);
+        break;
+    default:
+        break;
+    }
+
+    // 云台原有策略在每次在线扫描时额外发送MIT使能帧
+    CAN_Send_Data(CAN_Manage_Object->CAN_Handler, CAN_ID + 0xf0, DM_Motor_CAN_Message_Enter, 8);
+}
+
 /**
  * @brief TIM定时器中断计算回调函数
  *
@@ -246,7 +282,7 @@ void Class_Gimbal::Init()
     Motor_Pitch.IMU = &Boardc_BMI;
     Motor_Pitch.Init(&hfdcan2, DM_Motor_ID_0xA1, DM_Motor_Control_Method_MIT_OPENLOOP);
 
-    Motor_Pitch_2.Init(&hfdcan1, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA, PI);
+    Motor_Pitch_2.Init(&hfdcan1, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA, 30.0f, 10.0f, PI);
     Motor_Pitch_2.Set_Target_Omega(0.0f);
 }
 
