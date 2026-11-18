@@ -36,17 +36,27 @@ enum Enum_DM_Motor_Status
  * @brief 达妙电机的ID枚举类型
  *
  */
-enum Enum_DM_Motor_ID : uint8_t
+enum Enum_DM_Motor_ID : uint16_t
 {
     DM_Motor_ID_UNDEFINED = 0,
-    DM_Motor_ID_0xA1,
-    DM_Motor_ID_0xA2,
-    DM_Motor_ID_0xA3,
-    DM_Motor_ID_0xA4,
-    DM_Motor_ID_0xA5,
-    DM_Motor_ID_0xA6,
-    DM_Motor_ID_0xA7,
-    DM_Motor_ID_0xA8,
+    // 枚举值为上位机实际配置的 CAN_ID。
+    DM_Motor_ID_0xA1 = 0xF1,
+    DM_Motor_ID_0xA2 = 0xF2,
+    DM_Motor_ID_0xA3 = 0xF3,
+    DM_Motor_ID_0xA4 = 0xF4,
+    DM_Motor_ID_0xA5 = 0xF5,
+    DM_Motor_ID_0xA6 = 0xF6,
+    DM_Motor_ID_0xA7 = 0xF7,
+    DM_Motor_ID_0xA8 = 0xF8,
+
+    DM_Motor_ID_0x301 = 0x301,
+    DM_Motor_ID_0x302 = 0x302,
+    DM_Motor_ID_0x303 = 0x303,
+    DM_Motor_ID_0x304 = 0x304,
+    DM_Motor_ID_0x305 = 0x305,
+    DM_Motor_ID_0x306 = 0x306,
+    DM_Motor_ID_0x307 = 0x307,
+    DM_Motor_ID_0x308 = 0x308,
 };
 
 enum Enum_DM_Motor_ErrorCode : uint8_t
@@ -97,7 +107,7 @@ enum Enum_DM_Motor_Control_Method
  */
 struct Struct_DM_Motor_CAN_Rx_Data
 {
-    Enum_DM_Motor_ID CAN_ID;
+    uint8_t CAN_ID; // 原始 D0：高四位 ERR，低四位 ID
     uint16_t Position_Reverse;
     uint8_t Omega_11_4;
     uint8_t Omega_3_0_Torque_11_8;
@@ -111,7 +121,7 @@ struct Struct_DM_Motor_CAN_Rx_Data
  */
 struct Struct_DM_Motor_Feedback
 {
-    Enum_DM_Motor_ID CAN_ID;
+    uint8_t CAN_ID; // 反馈 D0 的低四位
     Enum_DM_Motor_ErrorCode ErrorCode;
     float Now_Angle;
     float Now_Omega;
@@ -216,7 +226,7 @@ protected:
  */
 struct Struct_DM_Motor_Rx_Data
 {
-    Enum_DM_Motor_ID CAN_ID;
+    uint8_t CAN_ID; // 反馈 D0 的低四位
     Enum_DM_Motor_ErrorCode ErrorCode;
     float Now_Angle;
     float Now_Omega;

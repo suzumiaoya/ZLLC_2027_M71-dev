@@ -47,41 +47,49 @@ uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID)
         switch (__CAN_ID)
         {
         case (DM_Motor_ID_0xA1):
+        case (DM_Motor_ID_0x301):
         {
             tmp_tx_data_ptr = CAN1_0xxf1_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA2):
+        case (DM_Motor_ID_0x302):
         {
             tmp_tx_data_ptr = CAN1_0xxf2_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA3):
+        case (DM_Motor_ID_0x303):
         {
             tmp_tx_data_ptr = CAN1_0xxf3_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA4):
+        case (DM_Motor_ID_0x304):
         {
             tmp_tx_data_ptr = CAN1_0xxf4_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA5):
+        case (DM_Motor_ID_0x305):
         {
             tmp_tx_data_ptr = CAN1_0xxf5_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA6):
+        case (DM_Motor_ID_0x306):
         {
             tmp_tx_data_ptr = CAN1_0xxf6_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA7):
+        case (DM_Motor_ID_0x307):
         {
             tmp_tx_data_ptr = CAN1_0xxf7_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA8):
+        case (DM_Motor_ID_0x308):
         {
             tmp_tx_data_ptr = CAN1_0xxf8_Tx_Data;
         }
@@ -93,41 +101,49 @@ uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID)
         switch (__CAN_ID)
         {
         case (DM_Motor_ID_0xA1):
+        case (DM_Motor_ID_0x301):
         {
             tmp_tx_data_ptr = CAN2_0xxf1_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA2):
+        case (DM_Motor_ID_0x302):
         {
             tmp_tx_data_ptr = CAN2_0xxf2_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA3):
+        case (DM_Motor_ID_0x303):
         {
             tmp_tx_data_ptr = CAN2_0xxf3_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA4):
+        case (DM_Motor_ID_0x304):
         {
             tmp_tx_data_ptr = CAN2_0xxf4_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA5):
+        case (DM_Motor_ID_0x305):
         {
             tmp_tx_data_ptr = CAN2_0xxf5_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA6):
+        case (DM_Motor_ID_0x306):
         {
             tmp_tx_data_ptr = CAN2_0xxf6_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA7):
+        case (DM_Motor_ID_0x307):
         {
             tmp_tx_data_ptr = CAN2_0xxf7_Tx_Data;
         }
         break;
         case (DM_Motor_ID_0xA8):
+        case (DM_Motor_ID_0x308):
         {
             tmp_tx_data_ptr = CAN2_0xxf8_Tx_Data;
         }
@@ -139,27 +155,35 @@ uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID)
         switch (__CAN_ID)
         {
         case (DM_Motor_ID_0xA1):
+        case (DM_Motor_ID_0x301):
             tmp_tx_data_ptr = CAN3_0xxf1_Tx_Data;
             break;
         case (DM_Motor_ID_0xA2):
+        case (DM_Motor_ID_0x302):
             tmp_tx_data_ptr = CAN3_0xxf2_Tx_Data;
             break;
         case (DM_Motor_ID_0xA3):
+        case (DM_Motor_ID_0x303):
             tmp_tx_data_ptr = CAN3_0xxf3_Tx_Data;
             break;
         case (DM_Motor_ID_0xA4):
+        case (DM_Motor_ID_0x304):
             tmp_tx_data_ptr = CAN3_0xxf4_Tx_Data;
             break;
         case (DM_Motor_ID_0xA5):
+        case (DM_Motor_ID_0x305):
             tmp_tx_data_ptr = CAN3_0xxf5_Tx_Data;
             break;
         case (DM_Motor_ID_0xA6):
+        case (DM_Motor_ID_0x306):
             tmp_tx_data_ptr = CAN3_0xxf6_Tx_Data;
             break;
         case (DM_Motor_ID_0xA7):
+        case (DM_Motor_ID_0x307):
             tmp_tx_data_ptr = CAN3_0xxf7_Tx_Data;
             break;
         case (DM_Motor_ID_0xA8):
+        case (DM_Motor_ID_0x308):
             tmp_tx_data_ptr = CAN3_0xxf8_Tx_Data;
             break;
         }
@@ -307,7 +331,7 @@ void Class_DM_Motor::Data_Process(uint8_t *Rx_Data)
     uint16_t tmp_omega = (Rx_Data[3] << 4) | (Rx_Data[4] >> 4);
     uint16_t tmp_torque = ((Rx_Data[4] & 0x0f) << 8) | Rx_Data[5];
 
-    Data.CAN_ID = static_cast<Enum_DM_Motor_ID>(Rx_Data[0] & 0x0f);
+    Data.CAN_ID = Rx_Data[0] & 0x0f;
     Data.ErrorCode = static_cast<Enum_DM_Motor_ErrorCode>(Rx_Data[0] >> 4);
     Data.Now_Angle = Math_Int_To_Float(tmp_position, 0, (1 << 16) - 1, -Angle_Max, Angle_Max);
     Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0, (1 << 12) - 1, -Omega_Max, Omega_Max);
@@ -353,13 +377,12 @@ void Class_DM_Motor::TIM_Alive_PeriodElapsedCallback()
     case DM_Motor_Control_Method_MIT_ANGLE:
     case DM_Motor_Control_Method_MIT_IMU_Angle:
     case DM_Motor_Control_Method_MIT_OPENLOOP:
-        tx_id += 0xf0;
         break;
     case DM_Motor_Control_Method_POSITION_OMEGA:
-        tx_id += 0x1f0;
+        tx_id += 0x100;
         break;
     case DM_Motor_Control_Method_OMEGA:
-        tx_id += 0x2f0;
+        tx_id += 0x200;
         break;
     default:
         return;
@@ -488,7 +511,7 @@ void Class_DM_Motor::Pack_Control_Frame()
         uint8_t tmp_torque_7_0 = tmp_torque;
         memcpy(&CAN_Tx_Data[7], &tmp_torque_7_0, sizeof(uint8_t));
 
-        Control_Tx_ID = CAN_ID + 0xf0;
+        Control_Tx_ID = CAN_ID;
         Control_Tx_Length = 8;
     }
     break;
@@ -498,7 +521,7 @@ void Class_DM_Motor::Pack_Control_Frame()
 
         memcpy(&CAN_Tx_Data[4], &Target_Omega, sizeof(float));
 
-        Control_Tx_ID = CAN_ID + 0x1f0;
+        Control_Tx_ID = CAN_ID + 0x100;
         Control_Tx_Length = 8;
     }
     break;
@@ -506,7 +529,7 @@ void Class_DM_Motor::Pack_Control_Frame()
     {
         memcpy(&CAN_Tx_Data[0], &Target_Omega, sizeof(float));
 
-        Control_Tx_ID = CAN_ID + 0x2f0;
+        Control_Tx_ID = CAN_ID + 0x200;
         Control_Tx_Length = 4;
     }
     break;
