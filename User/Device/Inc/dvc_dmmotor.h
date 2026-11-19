@@ -131,7 +131,7 @@ struct Struct_DM_Motor_Feedback
 };
 
 /**
- * @brief 达妙电机抽象基类, 由具体型号实现控制帧发送
+ * @brief 达妙电机基类，由具体型号公开初始化接口
  */
 class Class_DM_Motor
 {
@@ -143,8 +143,6 @@ public:
     Class_PID PID_Omega;
 
     virtual ~Class_DM_Motor() = default;
-
-    virtual void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method, float __Omega_Max, float __Torque_Max, float __Angle_Max) = 0;
 
     Enum_DM_Motor_Status Get_DM_Motor_Status();
     Enum_DM_Motor_Control_Status Get_DM_Motor_Control_Status();
@@ -184,6 +182,9 @@ public:
     uint8_t Send_Control_Frame();
 
 protected:
+    Class_DM_Motor() = default;
+    Class_DM_Motor(const Class_DM_Motor&) = default;
+    void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method, float __Omega_Max, float __Torque_Max, float __Angle_Max);
 
     //初始化相关变量
     Struct_CAN_Manage_Object *CAN_Manage_Object = nullptr;
@@ -249,7 +250,7 @@ class Class_DM_Motor_J4310 : public Class_DM_Motor
 {
 public:
 
-    void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method = DM_Motor_Control_Method_MIT_POSITION, float __Omega_Max = 30.0f, float __Torque_Max = 10.0f, float __Angle_Max = PI) override;
+    virtual void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method = DM_Motor_Control_Method_MIT_POSITION, float __Omega_Max = 30.0f, float __Torque_Max = 10.0f, float __Angle_Max = PI);
 
     float Get_Out();
     void Set_Out(float __Out);
