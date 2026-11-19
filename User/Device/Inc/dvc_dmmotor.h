@@ -49,14 +49,15 @@ enum Enum_DM_Motor_ID : uint16_t
     DM_Motor_ID_0xA7 = 0xF7,
     DM_Motor_ID_0xA8 = 0xF8,
 
-    DM_Motor_ID_0x301 = 0x301,
-    DM_Motor_ID_0x302 = 0x302,
-    DM_Motor_ID_0x303 = 0x303,
-    DM_Motor_ID_0x304 = 0x304,
-    DM_Motor_ID_0x305 = 0x305,
-    DM_Motor_ID_0x306 = 0x306,
-    DM_Motor_ID_0x307 = 0x307,
-    DM_Motor_ID_0x308 = 0x308,
+    // 同总线尾号须唯一。速度模式占用 0x201～0x208，禁止与大疆电机共线。
+    DM_Motor_ID_0x01 = 0x01,
+    DM_Motor_ID_0x02 = 0x02,
+    DM_Motor_ID_0x03 = 0x03,
+    DM_Motor_ID_0x04 = 0x04,
+    DM_Motor_ID_0x05 = 0x05,
+    DM_Motor_ID_0x06 = 0x06,
+    DM_Motor_ID_0x07 = 0x07,
+    DM_Motor_ID_0x08 = 0x08,
 };
 
 enum Enum_DM_Motor_ErrorCode : uint8_t
@@ -216,7 +217,7 @@ protected:
     float Target_Torque = 0.0f;
 
     //内部函数
-    virtual void Pack_Control_Frame();
+    virtual void Pack_Control_Frame(float angle, float omega, float torque, float kp, float kd);
     // 使用相同反馈协议的子类应先调用父类实现, 再转换到输出轴侧
     virtual void Data_Process(uint8_t *Rx_Data);
 };
@@ -261,6 +262,25 @@ protected:
     float Out = 0.0f;
 
     void Output();
+};
+
+/**
+ * @brief S2325 及采用相同转子侧协议的增量式电机。角度以本次上电位置为零点。
+ * 量程与上位机 VMAX/TMAX/PMAX 一致；PMAX 应覆盖减速比乘以关节全行程并留有余量。
+ * 减速比为转子速度 / 输出轴速度；传 1 可直接使用转子侧单位。
+ */
+class Class_DM_Motor_S2325 : public Class_DM_Motor
+{
+public:
+    void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method,
+              float __Omega_Max, float __Torque_Max, float __Angle_Max, float __Gear_Ratio);
+
+protected:
+    void Pack_Control_Frame(float angle, float omega, float torque, float kp, float kd) override;
+    void Data_Process(uint8_t *Rx_Data) override;
+
+private:
+    float Gear_Ratio = 1.0f;
 };
 
 /* Exported variables --------------------------------------------------------*/

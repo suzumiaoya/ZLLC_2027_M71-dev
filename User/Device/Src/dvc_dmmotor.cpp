@@ -19,13 +19,13 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-//清除电机错误信息
+// 清除电机错误信息
 uint8_t DM_Motor_CAN_Message_Clear_Error[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfb};
-//使能电机
+// 使能电机
 uint8_t DM_Motor_CAN_Message_Enter[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfc};
-//失能电机
+// 失能电机
 uint8_t DM_Motor_CAN_Message_Exit[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd};
-//保存当前电机位置为零点
+// 保存当前电机位置为零点
 uint8_t DM_Motor_CAN_Message_Save_Zero[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe};
 
 /* Private function declarations ---------------------------------------------*/
@@ -41,151 +41,111 @@ uint8_t DM_Motor_CAN_Message_Save_Zero[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
  */
 uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID)
 {
-    uint8_t *tmp_tx_data_ptr;
-    if (hcan == &hfdcan1)
-    {
-        switch (__CAN_ID)
-        {
-        case (DM_Motor_ID_0xA1):
-        case (DM_Motor_ID_0x301):
-        {
-            tmp_tx_data_ptr = CAN1_0xxf1_Tx_Data;
+    uint8_t *tmp_tx_data_ptr = nullptr;
+    if (hcan == &hfdcan1) {
+        switch (__CAN_ID) {
+            case (DM_Motor_ID_0xA1):
+            case (DM_Motor_ID_0x01): {
+                tmp_tx_data_ptr = CAN1_0xxf1_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA2):
+            case (DM_Motor_ID_0x02): {
+                tmp_tx_data_ptr = CAN1_0xxf2_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA3):
+            case (DM_Motor_ID_0x03): {
+                tmp_tx_data_ptr = CAN1_0xxf3_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA4):
+            case (DM_Motor_ID_0x04): {
+                tmp_tx_data_ptr = CAN1_0xxf4_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA5):
+            case (DM_Motor_ID_0x05): {
+                tmp_tx_data_ptr = CAN1_0xxf5_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA6):
+            case (DM_Motor_ID_0x06): {
+                tmp_tx_data_ptr = CAN1_0xxf6_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA7):
+            case (DM_Motor_ID_0x07): {
+                tmp_tx_data_ptr = CAN1_0xxf7_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA8):
+            case (DM_Motor_ID_0x08): {
+                tmp_tx_data_ptr = CAN1_0xxf8_Tx_Data;
+            } break;
         }
-        break;
-        case (DM_Motor_ID_0xA2):
-        case (DM_Motor_ID_0x302):
-        {
-            tmp_tx_data_ptr = CAN1_0xxf2_Tx_Data;
+    } else if (hcan == &hfdcan2) {
+        switch (__CAN_ID) {
+            case (DM_Motor_ID_0xA1):
+            case (DM_Motor_ID_0x01): {
+                tmp_tx_data_ptr = CAN2_0xxf1_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA2):
+            case (DM_Motor_ID_0x02): {
+                tmp_tx_data_ptr = CAN2_0xxf2_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA3):
+            case (DM_Motor_ID_0x03): {
+                tmp_tx_data_ptr = CAN2_0xxf3_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA4):
+            case (DM_Motor_ID_0x04): {
+                tmp_tx_data_ptr = CAN2_0xxf4_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA5):
+            case (DM_Motor_ID_0x05): {
+                tmp_tx_data_ptr = CAN2_0xxf5_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA6):
+            case (DM_Motor_ID_0x06): {
+                tmp_tx_data_ptr = CAN2_0xxf6_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA7):
+            case (DM_Motor_ID_0x07): {
+                tmp_tx_data_ptr = CAN2_0xxf7_Tx_Data;
+            } break;
+            case (DM_Motor_ID_0xA8):
+            case (DM_Motor_ID_0x08): {
+                tmp_tx_data_ptr = CAN2_0xxf8_Tx_Data;
+            } break;
         }
-        break;
-        case (DM_Motor_ID_0xA3):
-        case (DM_Motor_ID_0x303):
-        {
-            tmp_tx_data_ptr = CAN1_0xxf3_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA4):
-        case (DM_Motor_ID_0x304):
-        {
-            tmp_tx_data_ptr = CAN1_0xxf4_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA5):
-        case (DM_Motor_ID_0x305):
-        {
-            tmp_tx_data_ptr = CAN1_0xxf5_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA6):
-        case (DM_Motor_ID_0x306):
-        {
-            tmp_tx_data_ptr = CAN1_0xxf6_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA7):
-        case (DM_Motor_ID_0x307):
-        {
-            tmp_tx_data_ptr = CAN1_0xxf7_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA8):
-        case (DM_Motor_ID_0x308):
-        {
-            tmp_tx_data_ptr = CAN1_0xxf8_Tx_Data;
-        }
-        break;
-        }
-    }
-    else if (hcan == &hfdcan2)
-    {
-        switch (__CAN_ID)
-        {
-        case (DM_Motor_ID_0xA1):
-        case (DM_Motor_ID_0x301):
-        {
-            tmp_tx_data_ptr = CAN2_0xxf1_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA2):
-        case (DM_Motor_ID_0x302):
-        {
-            tmp_tx_data_ptr = CAN2_0xxf2_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA3):
-        case (DM_Motor_ID_0x303):
-        {
-            tmp_tx_data_ptr = CAN2_0xxf3_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA4):
-        case (DM_Motor_ID_0x304):
-        {
-            tmp_tx_data_ptr = CAN2_0xxf4_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA5):
-        case (DM_Motor_ID_0x305):
-        {
-            tmp_tx_data_ptr = CAN2_0xxf5_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA6):
-        case (DM_Motor_ID_0x306):
-        {
-            tmp_tx_data_ptr = CAN2_0xxf6_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA7):
-        case (DM_Motor_ID_0x307):
-        {
-            tmp_tx_data_ptr = CAN2_0xxf7_Tx_Data;
-        }
-        break;
-        case (DM_Motor_ID_0xA8):
-        case (DM_Motor_ID_0x308):
-        {
-            tmp_tx_data_ptr = CAN2_0xxf8_Tx_Data;
-        }
-        break;
-        }
-    }
-    else if (hcan == &hfdcan3)
-    {
-        switch (__CAN_ID)
-        {
-        case (DM_Motor_ID_0xA1):
-        case (DM_Motor_ID_0x301):
-            tmp_tx_data_ptr = CAN3_0xxf1_Tx_Data;
-            break;
-        case (DM_Motor_ID_0xA2):
-        case (DM_Motor_ID_0x302):
-            tmp_tx_data_ptr = CAN3_0xxf2_Tx_Data;
-            break;
-        case (DM_Motor_ID_0xA3):
-        case (DM_Motor_ID_0x303):
-            tmp_tx_data_ptr = CAN3_0xxf3_Tx_Data;
-            break;
-        case (DM_Motor_ID_0xA4):
-        case (DM_Motor_ID_0x304):
-            tmp_tx_data_ptr = CAN3_0xxf4_Tx_Data;
-            break;
-        case (DM_Motor_ID_0xA5):
-        case (DM_Motor_ID_0x305):
-            tmp_tx_data_ptr = CAN3_0xxf5_Tx_Data;
-            break;
-        case (DM_Motor_ID_0xA6):
-        case (DM_Motor_ID_0x306):
-            tmp_tx_data_ptr = CAN3_0xxf6_Tx_Data;
-            break;
-        case (DM_Motor_ID_0xA7):
-        case (DM_Motor_ID_0x307):
-            tmp_tx_data_ptr = CAN3_0xxf7_Tx_Data;
-            break;
-        case (DM_Motor_ID_0xA8):
-        case (DM_Motor_ID_0x308):
-            tmp_tx_data_ptr = CAN3_0xxf8_Tx_Data;
-            break;
+    } else if (hcan == &hfdcan3) {
+        switch (__CAN_ID) {
+            case (DM_Motor_ID_0xA1):
+            case (DM_Motor_ID_0x01):
+                tmp_tx_data_ptr = CAN3_0xxf1_Tx_Data;
+                break;
+            case (DM_Motor_ID_0xA2):
+            case (DM_Motor_ID_0x02):
+                tmp_tx_data_ptr = CAN3_0xxf2_Tx_Data;
+                break;
+            case (DM_Motor_ID_0xA3):
+            case (DM_Motor_ID_0x03):
+                tmp_tx_data_ptr = CAN3_0xxf3_Tx_Data;
+                break;
+            case (DM_Motor_ID_0xA4):
+            case (DM_Motor_ID_0x04):
+                tmp_tx_data_ptr = CAN3_0xxf4_Tx_Data;
+                break;
+            case (DM_Motor_ID_0xA5):
+            case (DM_Motor_ID_0x05):
+                tmp_tx_data_ptr = CAN3_0xxf5_Tx_Data;
+                break;
+            case (DM_Motor_ID_0xA6):
+            case (DM_Motor_ID_0x06):
+                tmp_tx_data_ptr = CAN3_0xxf6_Tx_Data;
+                break;
+            case (DM_Motor_ID_0xA7):
+            case (DM_Motor_ID_0x07):
+                tmp_tx_data_ptr = CAN3_0xxf7_Tx_Data;
+                break;
+            case (DM_Motor_ID_0xA8):
+            case (DM_Motor_ID_0x08):
+                tmp_tx_data_ptr = CAN3_0xxf8_Tx_Data;
+                break;
         }
     }
     return (tmp_tx_data_ptr);
@@ -193,107 +153,107 @@ uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID)
 
 Enum_DM_Motor_Status Class_DM_Motor::Get_DM_Motor_Status()
 {
-        return (DM_Motor_Status);
+    return (DM_Motor_Status);
 }
 
 Enum_DM_Motor_Control_Status Class_DM_Motor::Get_DM_Motor_Control_Status()
 {
-        return (DM_Motor_Control_Status);
+    return (DM_Motor_Control_Status);
 }
 
 Enum_DM_Motor_ErrorCode Class_DM_Motor::Get_ErrorCode()
 {
-        return (Data.ErrorCode);
+    return (Data.ErrorCode);
 }
 
 float Class_DM_Motor::Get_Now_Angle()
 {
-        return (Data.Now_Angle);
+    return (Data.Now_Angle);
 }
 
 float Class_DM_Motor::Get_Now_Omega()
 {
-        return (Data.Now_Omega);
+    return (Data.Now_Omega);
 }
 
 float Class_DM_Motor::Get_Now_Torque()
 {
-        return (Data.Now_Torque);
+    return (Data.Now_Torque);
 }
 
 float Class_DM_Motor::Get_Now_MOS_Temperature()
 {
-        return (Data.Now_MOS_Temperature);
+    return (Data.Now_MOS_Temperature);
 }
 
 float Class_DM_Motor::Get_Now_Rotor_Temperature()
 {
-        return (Data.Now_Rotor_Temperature);
+    return (Data.Now_Rotor_Temperature);
 }
 
 Enum_DM_Motor_Control_Method Class_DM_Motor::Get_Control_Method()
 {
-        return (DM_Motor_Control_Method);
+    return (DM_Motor_Control_Method);
 }
 
 float Class_DM_Motor::Get_MIT_K_P()
 {
-        return (MIT_K_P);
+    return (MIT_K_P);
 }
 
 float Class_DM_Motor::Get_MIT_K_D()
 {
-        return (MIT_K_D);
+    return (MIT_K_D);
 }
 
 float Class_DM_Motor::Get_Target_Angle()
 {
-        return (Target_Angle);
+    return (Target_Angle);
 }
 
 float Class_DM_Motor::Get_Target_Omega()
 {
-        return (Target_Omega);
+    return (Target_Omega);
 }
 
 float Class_DM_Motor::Get_Target_Torque()
 {
-        return (Target_Torque);
+    return (Target_Torque);
 }
 
 void Class_DM_Motor::Set_DM_Control_Status(Enum_DM_Motor_Control_Status __Control_Status)
 {
-        DM_Motor_Control_Status = __Control_Status;
+    DM_Motor_Control_Status = __Control_Status;
 }
 
 void Class_DM_Motor::Set_DM_Motor_Control_Method(Enum_DM_Motor_Control_Method __Control_Method)
 {
-        DM_Motor_Control_Method = __Control_Method;
+    DM_Motor_Control_Method = __Control_Method;
 }
 
 void Class_DM_Motor::Set_MIT_K_P(float __MIT_K_P)
 {
-        MIT_K_P = __MIT_K_P;
+    MIT_K_P = __MIT_K_P;
 }
 
 void Class_DM_Motor::Set_MIT_K_D(float __MIT_K_D)
 {
-        MIT_K_D = __MIT_K_D;
+    MIT_K_D = __MIT_K_D;
 }
 
 void Class_DM_Motor::Set_Target_Angle(float __Target_Angle)
 {
-        Target_Angle = __Target_Angle;
+    Target_Angle = __Target_Angle;
 }
 
 void Class_DM_Motor::Set_Target_Omega(float __Target_Omega)
 {
-        Target_Omega = __Target_Omega;
+    Target_Omega = __Target_Omega;
 }
 
 void Class_DM_Motor::Set_Target_Torque(float __Target_Torque)
 {
-        Target_Torque = __Target_Torque;
+    Target_Torque = __Target_Torque;
 }
 
 /**
@@ -301,25 +261,20 @@ void Class_DM_Motor::Set_Target_Torque(float __Target_Torque)
  */
 void Class_DM_Motor::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method, float __Omega_Max, float __Torque_Max, float __Angle_Max)
 {
-    if (hcan->Instance == FDCAN1)
-    {
+    if (hcan->Instance == FDCAN1) {
         CAN_Manage_Object = &CAN1_Manage_Object;
-    }
-    else if (hcan->Instance == FDCAN2)
-    {
+    } else if (hcan->Instance == FDCAN2) {
         CAN_Manage_Object = &CAN2_Manage_Object;
-    }
-    else if (hcan->Instance == FDCAN3)
-    {
+    } else if (hcan->Instance == FDCAN3) {
         CAN_Manage_Object = &CAN3_Manage_Object;
     }
-    CAN_ID = __CAN_ID;
+    CAN_ID                  = __CAN_ID;
     DM_Motor_Control_Method = __Control_Method;
-    Omega_Max = __Omega_Max;
-    Torque_Max = __Torque_Max;
-    Angle_Max = __Angle_Max;
-    CAN_Tx_Data = allocate_tx_data(hcan, __CAN_ID);
-    Control_Tx_Length = 0;
+    Omega_Max               = __Omega_Max;
+    Torque_Max              = __Torque_Max;
+    Angle_Max               = __Angle_Max;
+    CAN_Tx_Data             = allocate_tx_data(hcan, __CAN_ID);
+    Control_Tx_Length       = 0;
 }
 
 /**
@@ -328,15 +283,15 @@ void Class_DM_Motor::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, 
 void Class_DM_Motor::Data_Process(uint8_t *Rx_Data)
 {
     uint16_t tmp_position = (Rx_Data[1] << 8) | Rx_Data[2];
-    uint16_t tmp_omega = (Rx_Data[3] << 4) | (Rx_Data[4] >> 4);
-    uint16_t tmp_torque = ((Rx_Data[4] & 0x0f) << 8) | Rx_Data[5];
+    uint16_t tmp_omega    = (Rx_Data[3] << 4) | (Rx_Data[4] >> 4);
+    uint16_t tmp_torque   = ((Rx_Data[4] & 0x0f) << 8) | Rx_Data[5];
 
-    Data.CAN_ID = Rx_Data[0] & 0x0f;
-    Data.ErrorCode = static_cast<Enum_DM_Motor_ErrorCode>(Rx_Data[0] >> 4);
-    Data.Now_Angle = Math_Int_To_Float(tmp_position, 0, (1 << 16) - 1, -Angle_Max, Angle_Max);
-    Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0, (1 << 12) - 1, -Omega_Max, Omega_Max);
-    Data.Now_Torque = Math_Int_To_Float(tmp_torque, 0, (1 << 12) - 1, -Torque_Max, Torque_Max);
-    Data.Now_MOS_Temperature = Rx_Data[6];
+    Data.CAN_ID                = Rx_Data[0] & 0x0f;
+    Data.ErrorCode             = static_cast<Enum_DM_Motor_ErrorCode>(Rx_Data[0] >> 4);
+    Data.Now_Angle             = Math_Int_To_Float(tmp_position, 0, (1 << 16) - 1, -Angle_Max, Angle_Max);
+    Data.Now_Omega             = Math_Int_To_Float(tmp_omega, 0, (1 << 12) - 1, -Omega_Max, Omega_Max);
+    Data.Now_Torque            = Math_Int_To_Float(tmp_torque, 0, (1 << 12) - 1, -Torque_Max, Torque_Max);
+    Data.Now_MOS_Temperature   = Rx_Data[6];
     Data.Now_Rotor_Temperature = Rx_Data[7];
 }
 
@@ -345,8 +300,7 @@ void Class_DM_Motor::Data_Process(uint8_t *Rx_Data)
  */
 void Class_DM_Motor::CAN_RxCpltCallback(uint8_t *Rx_Data)
 {
-    if (Rx_Data == nullptr)
-    {
+    if (Rx_Data == nullptr || CAN_Tx_Data == nullptr) {
         return;
     }
 
@@ -360,36 +314,29 @@ void Class_DM_Motor::CAN_RxCpltCallback(uint8_t *Rx_Data)
 void Class_DM_Motor::TIM_Alive_PeriodElapsedCallback()
 {
     uint32_t current_flag = Flag;
-    DM_Motor_Status = (current_flag == Pre_Flag) ? DM_Motor_Status_DISABLE : DM_Motor_Status_ENABLE;
-    Pre_Flag = current_flag;
-
-    if (CAN_Manage_Object == nullptr)
-    {
-        return;
-    }
+    DM_Motor_Status       = (current_flag == Pre_Flag) ? DM_Motor_Status_DISABLE : DM_Motor_Status_ENABLE;
+    Pre_Flag              = current_flag;
 
     // 沿用现有电机ID槽位和控制帧偏移
     uint16_t tx_id = CAN_ID;
-    switch (DM_Motor_Control_Method)
-    {
-    case DM_Motor_Control_Method_MIT_POSITION:
-    case DM_Motor_Control_Method_MIT_OMEGA:
-    case DM_Motor_Control_Method_MIT_ANGLE:
-    case DM_Motor_Control_Method_MIT_IMU_Angle:
-    case DM_Motor_Control_Method_MIT_OPENLOOP:
-        break;
-    case DM_Motor_Control_Method_POSITION_OMEGA:
-        tx_id += 0x100;
-        break;
-    case DM_Motor_Control_Method_OMEGA:
-        tx_id += 0x200;
-        break;
-    default:
-        return;
+    switch (DM_Motor_Control_Method) {
+        case DM_Motor_Control_Method_MIT_POSITION:
+        case DM_Motor_Control_Method_MIT_OMEGA:
+        case DM_Motor_Control_Method_MIT_ANGLE:
+        case DM_Motor_Control_Method_MIT_IMU_Angle:
+        case DM_Motor_Control_Method_MIT_OPENLOOP:
+            break;
+        case DM_Motor_Control_Method_POSITION_OMEGA:
+            tx_id += 0x100;
+            break;
+        case DM_Motor_Control_Method_OMEGA:
+            tx_id += 0x200;
+            break;
+        default:
+            return;
     }
 
-    uint8_t *tx_data = (DM_Motor_Control_Status == DM_Motor_Control_Status_ENABLE) ?
-                       DM_Motor_CAN_Message_Enter : DM_Motor_CAN_Message_Exit;
+    uint8_t *tx_data = (DM_Motor_Control_Status == DM_Motor_Control_Status_ENABLE) ? DM_Motor_CAN_Message_Enter : DM_Motor_CAN_Message_Exit;
     CAN_Send_Data(CAN_Manage_Object->CAN_Handler, tx_id, tx_data, 8);
 }
 
@@ -398,49 +345,42 @@ void Class_DM_Motor::TIM_Alive_PeriodElapsedCallback()
  */
 void Class_DM_Motor::TIM_PID_PeriodElapsedCallback()
 {
-    switch (DM_Motor_Control_Method)
-    {
-    case (DM_Motor_Control_Method_MIT_POSITION):
-    case (DM_Motor_Control_Method_POSITION_OMEGA):
-    case (DM_Motor_Control_Method_OMEGA):
-    break;
+    switch (DM_Motor_Control_Method) {
+        case (DM_Motor_Control_Method_MIT_POSITION):
+        case (DM_Motor_Control_Method_POSITION_OMEGA):
+        case (DM_Motor_Control_Method_OMEGA):
+            break;
 
-    case (DM_Motor_Control_Method_MIT_OMEGA):
-    {
-        //速度环
-        PID_Omega.Set_Target(Target_Omega);
-        PID_Omega.Set_Now(Data.Now_Omega);
+        case (DM_Motor_Control_Method_MIT_OMEGA): {
+            // 速度环
+            PID_Omega.Set_Target(Target_Omega);
+            PID_Omega.Set_Now(Data.Now_Omega);
 
-        PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+            PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
-        Target_Torque = PID_Omega.Get_Out();
-    }
-    break;
+            Target_Torque = PID_Omega.Get_Out();
+        } break;
 
-    case (DM_Motor_Control_Method_MIT_ANGLE):
-    {
-        PID_Angle.Set_Target(Target_Angle);
-        //角度环
-        PID_Angle.Set_Now(Data.Now_Angle);
-        PID_Angle.TIM_Adjust_PeriodElapsedCallback();
+        case (DM_Motor_Control_Method_MIT_ANGLE): {
+            PID_Angle.Set_Target(Target_Angle);
+            // 角度环
+            PID_Angle.Set_Now(Data.Now_Angle);
+            PID_Angle.TIM_Adjust_PeriodElapsedCallback();
 
-        Target_Omega = PID_Angle.Get_Out();
+            Target_Omega = PID_Angle.Get_Out();
 
-        //速度环
-        PID_Omega.Set_Target(Target_Omega);
-        PID_Omega.Set_Now(Data.Now_Omega);
+            // 速度环
+            PID_Omega.Set_Target(Target_Omega);
+            PID_Omega.Set_Now(Data.Now_Omega);
 
-        PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+            PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
-        Target_Torque = PID_Omega.Get_Out();
-    }
-    break;
+            Target_Torque = PID_Omega.Get_Out();
+        } break;
 
-    default:
-    {
-        Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-    }
-    break;
+        default: {
+            Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+        } break;
     }
 
     TIM_Process_PeriodElapsedCallback();
@@ -460,83 +400,77 @@ void Class_DM_Motor_J4310::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CA
  */
 void Class_DM_Motor::TIM_Process_PeriodElapsedCallback()
 {
-    Pack_Control_Frame();
+
+    Pack_Control_Frame(Target_Angle, Target_Omega, Target_Torque, MIT_K_P, MIT_K_D);
     Send_Control_Frame();
 }
 
 /**
  * @brief 生成控制帧并记录对应的CAN ID和长度
  */
-void Class_DM_Motor::Pack_Control_Frame()
+void Class_DM_Motor::Pack_Control_Frame(float angle, float omega, float torque, float kp, float kd)
 {
+    if (CAN_Tx_Data == nullptr) {
+        return;
+    }
+
     Control_Tx_Length = 0;
-    switch (DM_Motor_Control_Method)
-    {
-    case (DM_Motor_Control_Method_MIT_POSITION):
-    case (DM_Motor_Control_Method_MIT_OMEGA):
-    case (DM_Motor_Control_Method_MIT_ANGLE):
-    {
-        uint16_t tmp_position = Math_Float_To_Int(Target_Angle, -Angle_Max, Angle_Max, 0, (1 << 16) - 1);
-        uint16_t tmp_velocity = Math_Float_To_Int(Target_Omega, -Omega_Max, Omega_Max, 0, (1 << 12) - 1);
-        uint16_t tmp_k_p = 0;
-        uint16_t tmp_k_d = 0;
-        if (DM_Motor_Control_Method == DM_Motor_Control_Method_MIT_POSITION)
-        {
-            tmp_k_p = Math_Float_To_Int(MIT_K_P, 0.0f, 500.0f, 0, (1 << 12) - 1);
-        }
-        if (DM_Motor_Control_Method != DM_Motor_Control_Method_MIT_ANGLE)
-        {
-            tmp_k_d = Math_Float_To_Int(MIT_K_D, 0.0f, 5.0f, 0, (1 << 12) - 1);
-        }
-        uint16_t tmp_torque = Math_Float_To_Int(Target_Torque, -Torque_Max, Torque_Max, 0, (1 << 12) - 1);
+    switch (DM_Motor_Control_Method) {
+        case (DM_Motor_Control_Method_MIT_POSITION):
+        case (DM_Motor_Control_Method_MIT_OMEGA):
+        case (DM_Motor_Control_Method_MIT_ANGLE): {
+            uint16_t tmp_position = Math_Float_To_Int(angle, -Angle_Max, Angle_Max, 0, (1 << 16) - 1);
+            uint16_t tmp_velocity = Math_Float_To_Int(omega, -Omega_Max, Omega_Max, 0, (1 << 12) - 1);
+            uint16_t tmp_k_p      = 0;
+            uint16_t tmp_k_d      = 0;
+            if (DM_Motor_Control_Method == DM_Motor_Control_Method_MIT_POSITION) {
+                tmp_k_p = Math_Float_To_Int(kp, 0.0f, 500.0f, 0, (1 << 12) - 1);
+            }
+            if (DM_Motor_Control_Method != DM_Motor_Control_Method_MIT_ANGLE) {
+                tmp_k_d = Math_Float_To_Int(kd, 0.0f, 5.0f, 0, (1 << 12) - 1);
+            }
+            uint16_t tmp_torque = Math_Float_To_Int(torque, -Torque_Max, Torque_Max, 0, (1 << 12) - 1);
 
-        Math_Endian_Reverse_16(&tmp_position);
-        memcpy(&CAN_Tx_Data[0], &tmp_position, sizeof(uint16_t));
+            Math_Endian_Reverse_16(&tmp_position);
+            memcpy(&CAN_Tx_Data[0], &tmp_position, sizeof(uint16_t));
 
-        uint8_t tmp_velocity_11_4 = tmp_velocity >> 4;
-        memcpy(&CAN_Tx_Data[2], &tmp_velocity_11_4, sizeof(uint8_t));
+            uint8_t tmp_velocity_11_4 = tmp_velocity >> 4;
+            memcpy(&CAN_Tx_Data[2], &tmp_velocity_11_4, sizeof(uint8_t));
 
-        uint8_t tmp_velocity_3_0_k_p_11_8 = ((tmp_velocity & 0x0f) << 4) | (tmp_k_p >> 8);
-        memcpy(&CAN_Tx_Data[3], &tmp_velocity_3_0_k_p_11_8, sizeof(uint8_t));
+            uint8_t tmp_velocity_3_0_k_p_11_8 = ((tmp_velocity & 0x0f) << 4) | (tmp_k_p >> 8);
+            memcpy(&CAN_Tx_Data[3], &tmp_velocity_3_0_k_p_11_8, sizeof(uint8_t));
 
-        uint8_t tmp_k_p_7_0 = tmp_k_p;
-        memcpy(&CAN_Tx_Data[4], &tmp_k_p_7_0, sizeof(uint8_t));
+            uint8_t tmp_k_p_7_0 = tmp_k_p;
+            memcpy(&CAN_Tx_Data[4], &tmp_k_p_7_0, sizeof(uint8_t));
 
-        uint8_t tmp_k_d_11_4 = tmp_k_d >> 4;
-        memcpy(&CAN_Tx_Data[5], &tmp_k_d_11_4, sizeof(uint8_t));
+            uint8_t tmp_k_d_11_4 = tmp_k_d >> 4;
+            memcpy(&CAN_Tx_Data[5], &tmp_k_d_11_4, sizeof(uint8_t));
 
-        uint8_t tmp_k_d_3_0_torque_11_8 = ((tmp_k_d & 0x0f) << 4) | (tmp_torque >> 8);
-        memcpy(&CAN_Tx_Data[6], &tmp_k_d_3_0_torque_11_8, sizeof(uint8_t));
+            uint8_t tmp_k_d_3_0_torque_11_8 = ((tmp_k_d & 0x0f) << 4) | (tmp_torque >> 8);
+            memcpy(&CAN_Tx_Data[6], &tmp_k_d_3_0_torque_11_8, sizeof(uint8_t));
 
-        uint8_t tmp_torque_7_0 = tmp_torque;
-        memcpy(&CAN_Tx_Data[7], &tmp_torque_7_0, sizeof(uint8_t));
+            uint8_t tmp_torque_7_0 = tmp_torque;
+            memcpy(&CAN_Tx_Data[7], &tmp_torque_7_0, sizeof(uint8_t));
 
-        Control_Tx_ID = CAN_ID;
-        Control_Tx_Length = 8;
-    }
-    break;
-    case (DM_Motor_Control_Method_POSITION_OMEGA):
-    {
-        memcpy(&CAN_Tx_Data[0], &Target_Angle, sizeof(float));
+            Control_Tx_ID     = CAN_ID;
+            Control_Tx_Length = 8;
+        } break;
+        case (DM_Motor_Control_Method_POSITION_OMEGA): {
+            memcpy(&CAN_Tx_Data[0], &angle, sizeof(float));
 
-        memcpy(&CAN_Tx_Data[4], &Target_Omega, sizeof(float));
+            memcpy(&CAN_Tx_Data[4], &omega, sizeof(float));
 
-        Control_Tx_ID = CAN_ID + 0x100;
-        Control_Tx_Length = 8;
-    }
-    break;
-    case (DM_Motor_Control_Method_OMEGA):
-    {
-        memcpy(&CAN_Tx_Data[0], &Target_Omega, sizeof(float));
+            Control_Tx_ID     = CAN_ID + 0x100;
+            Control_Tx_Length = 8;
+        } break;
+        case (DM_Motor_Control_Method_OMEGA): {
+            memcpy(&CAN_Tx_Data[0], &omega, sizeof(float));
 
-        Control_Tx_ID = CAN_ID + 0x200;
-        Control_Tx_Length = 4;
-    }
-    break;
-    default:
-    {
-    }
-    break;
+            Control_Tx_ID     = CAN_ID + 0x200;
+            Control_Tx_Length = 4;
+        } break;
+        default: {
+        } break;
     }
 }
 
@@ -545,43 +479,65 @@ void Class_DM_Motor::Pack_Control_Frame()
  */
 uint8_t Class_DM_Motor::Send_Control_Frame()
 {
-    if (Control_Tx_Length == 0)
-    {
+    if (Control_Tx_Length == 0) {
         return (HAL_ERROR);
     }
 
     uint8_t status = CAN_Send_Data(CAN_Manage_Object->CAN_Handler, Control_Tx_ID, CAN_Tx_Data, Control_Tx_Length);
-    if (status == HAL_OK)
-    {
+    if (status == HAL_OK) {
         Control_Tx_Length = 0;
     }
     return (status);
 }
 
+void Class_DM_Motor_S2325::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method,
+                                float __Omega_Max, float __Torque_Max, float __Angle_Max, float __Gear_Ratio)
+{
+    Class_DM_Motor::Init(hcan, __CAN_ID, __Control_Method, __Omega_Max, __Torque_Max, __Angle_Max);
+    Gear_Ratio = __Gear_Ratio;
+}
+
+void Class_DM_Motor_S2325::Data_Process(uint8_t *Rx_Data)
+{
+    Class_DM_Motor::Data_Process(Rx_Data);
+    Data.Now_Angle /= Gear_Ratio;
+    Data.Now_Omega /= Gear_Ratio;
+    Data.Now_Torque *= Gear_Ratio;
+}
+
+void Class_DM_Motor_S2325::Pack_Control_Frame(float angle, float omega, float torque, float kp, float kd)
+{
+    // 发送时乘以减速比转回转子侧数据
+    float angle  = Target_Angle * Gear_Ratio;
+    float omega  = Target_Omega * Gear_Ratio;
+    float torque = Target_Torque / Gear_Ratio;
+    // MIT 增益的分子为扭矩，分母为角度或角速度，两侧换算合计除以减速比平方。
+    float kp = MIT_K_P / Gear_Ratio / Gear_Ratio;
+    float kd = MIT_K_D / Gear_Ratio / Gear_Ratio;
+
+    DM_Motor::Pack_Control_Frame(angle, omega, torque, kp, kd);
+}
+
 void Class_DM_Motor_J4310::Output()
 {
-    switch (DM_Motor_Control_Method)
-    {
-        case(DM_Motor_Control_Method_MIT_IMU_Angle):
-        case(DM_Motor_Control_Method_MIT_OPENLOOP):
-        {
+    switch (DM_Motor_Control_Method) {
+        case (DM_Motor_Control_Method_MIT_IMU_Angle):
+        case (DM_Motor_Control_Method_MIT_OPENLOOP): {
             Limit_Out();
 
-            uint16_t tmp_out=Math_Float_To_Int(Out,-4095,4095,0,(1<<12)-1);
+            uint16_t tmp_out = Math_Float_To_Int(Out, -4095, 4095, 0, (1 << 12) - 1);
 
-            uint8_t tmp_torque_6=(tmp_out>>8)&0x0F;
-            memcpy(&CAN_Tx_Data[6],&tmp_torque_6,sizeof(uint8_t));
+            uint8_t tmp_torque_6 = (tmp_out >> 8) & 0x0F;
+            memcpy(&CAN_Tx_Data[6], &tmp_torque_6, sizeof(uint8_t));
 
-            uint8_t tmp_torque_7=tmp_out & 0xFF;
-            memcpy(&CAN_Tx_Data[7],&tmp_torque_7,sizeof(uint8_t));
+            uint8_t tmp_torque_7 = tmp_out & 0xFF;
+            memcpy(&CAN_Tx_Data[7], &tmp_torque_7, sizeof(uint8_t));
 
-            uint8_t tmp_torque[6]={0x7F,0xFF,0x7F,0xF0,0x00,0x00};
-            for (uint8_t i = 0; i < 6; i++)
-            {
-                memcpy(&CAN_Tx_Data[i],&tmp_torque[i],sizeof(uint8_t));
-            }    
-        }
-        break;
+            uint8_t tmp_torque[6] = {0x7F, 0xFF, 0x7F, 0xF0, 0x00, 0x00};
+            for (uint8_t i = 0; i < 6; i++) {
+                memcpy(&CAN_Tx_Data[i], &tmp_torque[i], sizeof(uint8_t));
+            }
+        } break;
     }
 }
 
@@ -603,7 +559,7 @@ float Class_DM_Motor_J4310::Get_Out()
 
 void Class_DM_Motor_J4310::Set_Out(float __Out)
 {
-    Out=__Out;
+    Out = __Out;
 }
 
 /**
@@ -613,15 +569,13 @@ void Class_DM_Motor_J4310::Set_Out(float __Out)
  */
 void Class_DM_Motor_J4310::Limit_Out()
 {
-	if(Out>4095)
-		Out=4095;
-	else if(Out<-4095)
-		Out=-4095;
+    if (Out > 4095)
+        Out = 4095;
+    else if (Out < -4095)
+        Out = -4095;
 
-	else
-	{
-
-	}
+    else {
+    }
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
