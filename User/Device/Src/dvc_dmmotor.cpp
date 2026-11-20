@@ -419,6 +419,12 @@ void Class_DM_Motor::Pack_Control_Frame(float angle, float omega, float torque, 
         case (DM_Motor_Control_Method_MIT_POSITION):
         case (DM_Motor_Control_Method_MIT_OMEGA):
         case (DM_Motor_Control_Method_MIT_ANGLE): {
+            Math_Constrain(&angle, -Angle_Max, Angle_Max);
+            Math_Constrain(&omega, -Omega_Max, Omega_Max);
+            Math_Constrain(&torque, -Torque_Max, Torque_Max);
+            Math_Constrain(&kp, 0.0f, 500.0f);
+            Math_Constrain(&kd, 0.0f, 5.0f);
+
             uint16_t tmp_position = Math_Float_To_Int(angle, -Angle_Max, Angle_Max, 0, (1 << 16) - 1);
             uint16_t tmp_velocity = Math_Float_To_Int(omega, -Omega_Max, Omega_Max, 0, (1 << 12) - 1);
             uint16_t tmp_k_p      = 0;
@@ -507,15 +513,13 @@ void Class_DM_Motor_S2325::Data_Process(uint8_t *Rx_Data)
 
 void Class_DM_Motor_S2325::Pack_Control_Frame(float angle, float omega, float torque, float kp, float kd)
 {
-    // 发送时乘以减速比转回转子侧数据
-    float angle  = Target_Angle * Gear_Ratio;
-    float omega  = Target_Omega * Gear_Ratio;
-    float torque = Target_Torque / Gear_Ratio;
-    // MIT 增益的分子为扭矩，分母为角度或角速度，两侧换算合计除以减速比平方。
-    float kp = MIT_K_P / Gear_Ratio / Gear_Ratio;
-    float kd = MIT_K_D / Gear_Ratio / Gear_Ratio;
+    angle *= Gear_Ratio;
+    omega *= Gear_Ratio;
+    torque /= Gear_Ratio;
+    kp = kp / Gear_Ratio / Gear_Ratio;
+    kd = kd / Gear_Ratio / Gear_Ratio;
 
-    DM_Motor::Pack_Control_Frame(angle, omega, torque, kp, kd);
+    Class_DM_Motor::Pack_Control_Frame(angle, omega, torque, kp, kd);
 }
 
 void Class_DM_Motor_J4310::Output()
