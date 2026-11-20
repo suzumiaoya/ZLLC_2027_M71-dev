@@ -42,8 +42,9 @@
 #endif
 
 //底盘或云台状态
-#define CHASSIS
+//#define CHASSIS
 //#define GIMBAL
+#define ROBOTIC_ARM
 
 //底盘标定参考正方向角度(数据来源yaw电机)
 #define Reference_Angle  -52.29f
