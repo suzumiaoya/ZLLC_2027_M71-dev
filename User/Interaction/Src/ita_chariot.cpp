@@ -93,6 +93,11 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
         MiniPC.IMU = &Gimbal.Boardc_BMI;
         MiniPC.Referee = &Referee;
 
+    #elif defined(ROBOTIC_ARM)
+
+        Test_Arm.Init();
+        Arm_Board_IMU.Init();
+
     #endif
 
     HAL_TIM_PWM_Init(&htim12);
@@ -1258,7 +1263,9 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     Booster.TIM_Calculate_PeriodElapsedCallback();
     //传输数据给上位机
     MiniPC.TIM_Write_PeriodElapsedCallback();
-#endif				
+#elif defined(ROBOTIC_ARM)
+    Test_Arm.TIM_Calculate_PeriodElapsedCallback();
+#endif
 }
 
 
@@ -1575,8 +1582,13 @@ void Class_Chariot::TIM50ms_Alive_PeriodElapsedCallback()
     Booster.Motor_Driver.TIM_Alive_PeriodElapsedCallback();
     Booster.Motor_Friction_Left.TIM_Alive_PeriodElapsedCallback();
     Booster.Motor_Friction_Right.TIM_Alive_PeriodElapsedCallback();
-
-
+#elif defined(ROBOTIC_ARM)
+    Test_Arm.J1_Yaw_4340.TIM_Alive_PeriodElapsedCallback();
+    Test_Arm.J2_Pitch_8009P.TIM_Alive_PeriodElapsedCallback();
+    Test_Arm.J3_Pitch_4340.TIM_Alive_PeriodElapsedCallback();
+    Test_Arm.J4_Roll_2325.TIM_Alive_PeriodElapsedCallback();
+    Test_Arm.J5_Pitch_2325.TIM_Alive_PeriodElapsedCallback();
+    Test_Arm.J6_Roll_3507.TIM_Alive_PeriodElapsedCallback();
 #endif
 }
 
