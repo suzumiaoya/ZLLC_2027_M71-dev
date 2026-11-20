@@ -292,60 +292,6 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
 	  }
 }
 #endif
-
-#ifdef ROBOTIC_ARM
-void RoboticArm_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
-{
-    switch (CAN_RxMessage->Header.Identifier)
-    {
-        case(0x11):
-        {
-            chariot.Test_Arm.J1_Yaw_4340.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        }
-        break;
-
-        case(0x12):
-        {
-            chariot.Test_Arm.J2_Pitch_8009P.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        }
-        break;
-
-        case(0x13):
-        {
-            chariot.Test_Arm.J3_Pitch_4340.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        }
-        break;
-
-        case(0x14):
-        {
-            chariot.Test_Arm.J4_Roll_2325.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        }
-        break;
-
-        case(0x15):
-        {
-            chariot.Test_Arm.J5_Pitch_2325.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        }
-        break;
-
-        case(0x16):
-        {
-            chariot.Test_Arm.J6_Roll_3507.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        }
-        break;
-    }
-}
-
-void RoboticArm_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
-{
-    
-}
-
-void RoboticArm_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
-{
-    
-}
-#endif
 /**
  * @brief SPI5回调函数
  *
@@ -465,9 +411,6 @@ void Task100us_TIM4_Callback()
     #elif defined(GIMBAL)
     chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
     chariot.Gimbal.Boardc_BMI.Export_Snapshot(snapshot);
-    #elif defined(ROBOTIC_ARM)
-    chariot.Arm_Board_IMU.TIM_Calculate_PeriodElapsedCallback();
-    chariot.Arm_Board_IMU.Export_Snapshot(snapshot);
     #endif
     const BaseType_t result = xQueueOverwrite(xQueue_IMU_Snapshot, &snapshot);
     configASSERT(result == pdPASS);
@@ -483,8 +426,6 @@ void Task_IMU_ApplyLatestSnapshot(void)
         chariot.Boardc_BMI.Apply_Snapshot(snapshot);
     #elif defined(GIMBAL)
         chariot.Gimbal.Boardc_BMI.Apply_Snapshot(snapshot);
-    #elif defined(ROBOTIC_ARM)
-        chariot.Arm_Board_IMU.Apply_Snapshot(snapshot);
     #endif
     }
 }
@@ -640,15 +581,6 @@ extern "C" void Task_Init()
 
         USB_Init(&MiniPC_USB_Manage_Object, MiniPC_USB_Callback);
 
-    #endif
-
-    #ifdef ROBOTIC_ARM
-        //集中总线can1/can2
-        CAN_Init(&hfdcan1, RoboticArm_Device_CAN1_Callback);
-        CAN_Init(&hfdcan2, RoboticArm_Device_CAN2_Callback);
-        CAN_Init(&hfdcan3, RoboticArm_Device_CAN3_Callback);
-
-        SPI_Init(&hspi2,Device_SPI2_Callback);
     #endif
 
     // 原 TIM4/TIM5 周期任务由 FreeRTOS 延时调度，不再注册硬件定时器回调

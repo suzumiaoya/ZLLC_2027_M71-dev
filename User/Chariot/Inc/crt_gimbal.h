@@ -67,8 +67,7 @@ public:
 
     void Transform_Angle();
     void Disable();
-    void TIM_Alive_PeriodElapsedCallback() override;
-    void TIM_PID_PeriodElapsedCallback() override;
+    void TIM_PID_PeriodElapsedCallback();
 
 protected:
     //初始化相关变量
