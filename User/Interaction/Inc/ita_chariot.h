@@ -27,7 +27,6 @@
 #include "alg_filter.h"
 #include "dvc_dmimu.h"
 #include "buzzer.h"
-#include "crt_arm.h"
 
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
@@ -244,11 +243,6 @@ public:
         Class_FSM_Alive_Control_VT13 FSM_Alive_Control_VT13;
         friend class Class_FSM_Alive_Control_VT13;
 
-    #endif
-
-    #ifdef ROBOTIC_ARM
-        Class_RoboticArm Test_Arm;
-        Class_IMU Arm_Board_IMU;
     #endif
 
     void Init(float __DR16_Dead_Zone = 0);

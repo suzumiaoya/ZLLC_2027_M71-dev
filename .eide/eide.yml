@@ -26,7 +26,6 @@ virtualFolder:
         - path: User/Chariot/Src/crt_booster.cpp
         - path: User/Chariot/Src/crt_chassis.cpp
         - path: User/Chariot/Src/crt_gimbal.cpp
-        - path: User/Chariot/Src/crt_arm.cpp
       folders: []
     - name: Device
       files:
