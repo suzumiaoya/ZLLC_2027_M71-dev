@@ -37,6 +37,16 @@ enum Enum_RoboticArm_Joint : uint8_t {
     RoboticArm_Joint_NUM,     // 关节数量
 };
 
+/**
+ * @brief Specialized, 机械臂 J4310 系列关节电机类（仅打包控制帧，由交互层 CAN 调度统一错峰发送）
+ *
+ */
+class Class_Joint_DM_J4310 : public Class_DM_Motor_J4310
+{
+public:
+    void TIM_Process_PeriodElapsedCallback() override;
+};
+
 
 /**
  * @brief Specialized, 机械臂类
@@ -47,9 +57,9 @@ class Class_RoboticArm
 public:
 
     // 成员关节电机
-    Class_DM_Motor_J4310 J1_Yaw_4340;
-    Class_DM_Motor_J4310 J2_Pitch_8009P;
-    Class_DM_Motor_J4310 J3_Pitch_4340;
+    Class_Joint_DM_J4310 J1_Yaw_4340;
+    Class_Joint_DM_J4310 J2_Pitch_8009P;
+    Class_Joint_DM_J4310 J3_Pitch_4340;
     Class_DM_Motor_S2325 J4_Roll_2325;
     Class_DM_Motor_S2325 J5_Pitch_2325;
     Class_DM_Motor_J4310 J6_Roll_3507;

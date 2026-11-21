@@ -526,7 +526,7 @@ void Task1ms_TIM5_Callback()
             mod2 = 0;
         }
 
-        /* 1/2/5/10/20ms CAN 发送分频调度由交互层统一管理。 */
+        /* 1/2/5/10/20/50ms CAN 发送分频调度由交互层统一管理。 */
         chariot.TIM_CAN_Tx_PeriodElapsedCallback();
     }
 }

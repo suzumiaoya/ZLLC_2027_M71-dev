@@ -1348,6 +1348,59 @@ void Class_Chariot::TIM_CAN_Tx_PeriodElapsedCallback()
         CAN_Send_Data(&hfdcan1, 0xf2, CAN_DM4340_Reset, 8);
         Reset_Pitch_2 = false; // 重置标志位
     }
+#elif defined(ROBOTIC_ARM)
+    // 1ms 调度周期：每 5ms 轮询发送前三轴控制帧（单轴 200Hz），
+    // 第 5 个时间片（mod50 % 5 == 4）留给 6 轴达妙电机错峰执行 50ms 存活检测与使能/失能帧发送，
+    // 保证每 1ms 至多发送 1 帧，控制帧与使能/失能帧完全错开。
+    static uint8_t mod50 = 0;
+
+    switch (mod50 % 5U)
+    {
+        case 0U:
+            Test_Arm.J1_Yaw_4340.Send_Control_Frame();
+            break;
+        case 1U:
+            Test_Arm.J2_Pitch_8009P.Send_Control_Frame();
+            break;
+        case 2U:
+            Test_Arm.J3_Pitch_4340.Send_Control_Frame();
+            break;
+        case 3U:
+            break;
+        case 4U:
+            switch (mod50)
+            {
+                case 4U:
+                    Test_Arm.J1_Yaw_4340.TIM_Alive_PeriodElapsedCallback();
+                    break;
+                case 9U:
+                    Test_Arm.J2_Pitch_8009P.TIM_Alive_PeriodElapsedCallback();
+                    break;
+                case 14U:
+                    Test_Arm.J3_Pitch_4340.TIM_Alive_PeriodElapsedCallback();
+                    break;
+                case 19U:
+                    Test_Arm.J4_Roll_2325.TIM_Alive_PeriodElapsedCallback();
+                    break;
+                case 24U:
+                    Test_Arm.J5_Pitch_2325.TIM_Alive_PeriodElapsedCallback();
+                    break;
+                case 29U:
+                    Test_Arm.J6_Roll_3507.TIM_Alive_PeriodElapsedCallback();
+                    break;
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
+    }
+
+    mod50++;
+    if (mod50 >= 50U)
+    {
+        mod50 = 0;
+    }
 #endif
 }
 
@@ -1666,13 +1719,7 @@ void Class_Chariot::TIM50ms_Alive_PeriodElapsedCallback()
     Booster.Motor_Friction_Left.TIM_Alive_PeriodElapsedCallback();
     Booster.Motor_Friction_Right.TIM_Alive_PeriodElapsedCallback();
 #elif defined(ROBOTIC_ARM)
-    Test_Arm.J1_Yaw_4340.TIM_Alive_PeriodElapsedCallback();
-    Test_Arm.J2_Pitch_8009P.TIM_Alive_PeriodElapsedCallback();
-    Test_Arm.J3_Pitch_4340.TIM_Alive_PeriodElapsedCallback();
-    Test_Arm.J4_Roll_2325.TIM_Alive_PeriodElapsedCallback();
-    Test_Arm.J5_Pitch_2325.TIM_Alive_PeriodElapsedCallback();
-    Test_Arm.J6_Roll_3507.TIM_Alive_PeriodElapsedCallback();
-
+    // 达妙电机的 50ms 存活检测与使能/失能帧发送已移至 TIM_CAN_Tx_PeriodElapsedCallback() 错峰调度
     FS_I6X.TIM1msMod50_Alive_PeriodElapsedCallback();
 #endif
 }

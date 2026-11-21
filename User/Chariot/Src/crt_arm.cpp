@@ -52,4 +52,8 @@ void Class_RoboticArm::TIM_Calculate_PeriodElapsedCallback()
     }
 }
 
+void Class_Joint_DM_J4310::TIM_Process_PeriodElapsedCallback()
+{
+    Pack_Control_Frame(Target_Angle, Target_Omega, Target_Torque, MIT_K_P, MIT_K_D);
+}
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
