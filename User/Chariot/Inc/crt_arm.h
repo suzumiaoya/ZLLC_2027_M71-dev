@@ -83,9 +83,9 @@ private:
     // 机械臂整体初始化状态
     bool RoboticArm_Initialized = false;
 
-    // 机械臂各关节限位
-    float Joint_Max_Radian[RoboticArm_Joint_NUM] = {0};
-    float Joint_Min_Radian[RoboticArm_Joint_NUM] = {0};
+    // 机械臂各关节限位，单位 rad（对应 M71_predev.urdf 中 J1~J6 的 limit）
+    float Joint_Max_Radian[RoboticArm_Joint_NUM] = {1.5708f, 1.7279f, 0.0f, 2.618f, 1.5708f, 6.28f};
+    float Joint_Min_Radian[RoboticArm_Joint_NUM] = {-0.78539f, 0.0f, -3.1416f, -2.618f, -1.5708f, -6.28f};
     // 电机输出轴到关节轴的换算系数：安装方向 / 外部减速比
     float Motor_To_Joint_Scale[RoboticArm_Joint_NUM] = {-1.0f / 2.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
     // 机械臂各个关节的目标角度和角速度
