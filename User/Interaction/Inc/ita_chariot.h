@@ -28,6 +28,7 @@
 #include "dvc_dmimu.h"
 #include "buzzer.h"
 #include "crt_arm.h"
+#include "dvc_Fs_i6x.h"
 
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
@@ -249,6 +250,7 @@ public:
     #ifdef ROBOTIC_ARM
         Class_RoboticArm Test_Arm;
         Class_IMU Arm_Board_IMU;
+        Class_Fs_i6x FS_I6X;
     #endif
 
     void Init(float __DR16_Dead_Zone = 0);

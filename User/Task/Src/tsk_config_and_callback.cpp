@@ -345,6 +345,11 @@ void RoboticArm_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     
 }
+
+void FS_I6X_UART5_Callback(uint8_t *buffer, uint16_t length)
+{
+    chariot.FS_I6X.FS_UART_RxCpltCallback(buffer, length);
+}
 #endif
 /**
  * @brief SPI5回调函数
@@ -649,6 +654,8 @@ extern "C" void Task_Init()
         CAN_Init(&hfdcan3, RoboticArm_Device_CAN3_Callback);
 
         SPI_Init(&hspi2,Device_SPI2_Callback);
+
+        UART_Init(&huart5, FS_I6X_UART5_Callback, FS_I6X_FRAME_LENGTH);
     #endif
 
     // 原 TIM4/TIM5 周期任务由 FreeRTOS 延时调度，不再注册硬件定时器回调

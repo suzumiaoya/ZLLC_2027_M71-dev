@@ -97,6 +97,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
 
         Test_Arm.Init();
         Arm_Board_IMU.Init();
+        FS_I6X.Init(FS_I6X_Stick_Mode_2);
 
     #endif
 
@@ -1589,6 +1590,8 @@ void Class_Chariot::TIM50ms_Alive_PeriodElapsedCallback()
     Test_Arm.J4_Roll_2325.TIM_Alive_PeriodElapsedCallback();
     Test_Arm.J5_Pitch_2325.TIM_Alive_PeriodElapsedCallback();
     Test_Arm.J6_Roll_3507.TIM_Alive_PeriodElapsedCallback();
+
+    FS_I6X.TIM1msMod50_Alive_PeriodElapsedCallback();
 #endif
 }
 
