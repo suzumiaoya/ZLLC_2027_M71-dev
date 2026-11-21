@@ -202,8 +202,6 @@ void CAN_Error_Service(void);
 
 uint8_t CAN_Send_Data(FDCAN_HandleTypeDef *hcan, uint16_t ID, uint8_t *Data, uint16_t Length);
 
-void TIM_CAN_PeriodElapsedCallback();
-
 #ifdef __cplusplus
 }
 #endif

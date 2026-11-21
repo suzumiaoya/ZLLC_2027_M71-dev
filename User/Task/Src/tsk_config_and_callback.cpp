@@ -526,8 +526,8 @@ void Task1ms_TIM5_Callback()
             mod2 = 0;
         }
 
-        /* 驱动内部的 1/2/5/10/20ms 发送分频保持不变。 */
-        TIM_CAN_PeriodElapsedCallback();
+        /* 1/2/5/10/20ms CAN 发送分频调度由交互层统一管理。 */
+        chariot.TIM_CAN_Tx_PeriodElapsedCallback();
     }
 }
 

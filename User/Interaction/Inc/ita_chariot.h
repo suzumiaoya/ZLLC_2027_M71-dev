@@ -309,6 +309,8 @@ public:
     #endif
 
     void TIM_Calculate_PeriodElapsedCallback();
+    // 由控制任务每 1ms 调用，统一调度本形态的 CAN 发送。
+    void TIM_CAN_Tx_PeriodElapsedCallback();
     // 由在线检测任务每 50ms 调用，内部保留 150/350/1000ms 子分频。
     void TIM50ms_Alive_PeriodElapsedCallback();
     // 由控制任务调用，统一应用在线状态对应的控制模式保护。

@@ -10,7 +10,6 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "ita_chariot.h"
 #include "drv_can.h"
 #include "main.h"
 #include "freertos_tasks.h"
@@ -261,8 +260,6 @@ uint8_t CAN3_0x146_Tx_Data[8];
 uint8_t CAN3_0x147_Tx_Data[8];
 uint8_t CAN3_0x148_Tx_Data[8];
 
-
-uint8_t CAN_DM4340_Reset[8]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFB};
 /* Private function declarations ---------------------------------------------*/
 
 /* function prototypes -------------------------------------------------------*/
@@ -437,100 +434,6 @@ uint8_t CAN_Send_Data(FDCAN_HandleTypeDef *hcan, uint16_t ID, uint8_t *Data, uin
 }
 uint32_t ECR_value = FDCAN1->ECR;
 int test = 0;
-/**
- * @brief CAN的TIM定时器中断发送回调函数
- *
- */
-void TIM_CAN_PeriodElapsedCallback()
-{
-    
-    #ifdef CHASSIS
-    static uint8_t mod2 = 0,mod100 = 0,mod20 = 0;
-    static uint8_t flag2 = 0;
-    mod2++, mod100++,mod20++;
-    if (mod2 == 2) // 250Hz
-    {
-        mod2 = 0;
-        if (flag2 == 0) 
-        {
-            // 轮向 3508
-            CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
-            // 舵向 3508
-            CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);
-        }
-        else
-        {
-            // CAN_Send_Data(&hfdcan2, 0x68, CAN2_Chassis_Tx_Gimbal_Data, 8);
-            // CAN_Send_Data(&hfdcan2, 0x89, CAN2_Chassis_Tx_Gimbal_Data_1, 8);
-        }
-        flag2++;
-        flag2 = flag2 % 2;
-    }
-
-    if (mod100 == 10) //100Hz
-    {
-        CAN_Send_Data(&hfdcan2, 0x68, CAN2_Chassis_Tx_Gimbal_Data, 8);
-        CAN_Send_Data(&hfdcan2, 0x89, CAN2_Chassis_Tx_Gimbal_Data_1, 8);		
-//        CAN_Send_Data(&hfdcan3, 0x191, CAN3_Chassis_Tx_Data_G, 8);
-        mod100 = 0;
-    }
-    if (mod20 == 20) //50Hz
-    {
-        //上板
-        //CAN_Send_Data(&hfdcan2, 0x188, CAN3_Chassis_Tx_Data_A, 8);
-//        CAN_Send_Data(&hfdcan3, 0x199, CAN3_Chassis_Tx_Data_B, 8);
-//        CAN_Send_Data(&hfdcan3, 0x178, CAN3_Chassis_Tx_Data_C, 8);      
-//        CAN_Send_Data(&hfdcan3, 0x197, CAN3_Chassis_Tx_Data_E, 8);
-//        CAN_Send_Data(&hfdcan3, 0x198, CAN3_Chassis_Tx_Data_D, 8);
-//        CAN_Send_Data(&hfdcan3, 0x196, CAN3_Chassis_Tx_Data_F, 8);
-        //超电
-        CAN_Send_Data(&hfdcan3, 0x66, CAN_Supercap_Tx_Data, 8);
-        mod20 = 0;
-    }
-    #elif defined (GIMBAL)
-        // CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
-        //CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
-
-    static uint8_t mod5 = 0,mod2 = 0,mod10 = 0;
-    mod5++;
-    mod2++;
-    mod10++;
-    
-    if(mod5 == 5)
-    {
-        mod5 = 0;
-        CAN_Send_Data(&hfdcan2, 0x77, CAN2_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
-        CAN_Send_Data(&hfdcan2, 0x78, CAN2_Gimbal_Tx_Chassis_Data_1, 8);
-        CAN_Send_Data(&hfdcan2, 0x79, CAN2_Gimbal_Tx_Chassis_Data_2, 8);
-        
-        // CAN_Send_Data(&hfdcan1, 0xf1, CAN1_0xxf1_Tx_Data, 8);
-        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
-        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);
-        
-    }
-
-    if(mod2 == 2)
-    {
-        CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
-        CAN_Send_Data(&hfdcan1, 0xa0, CAN1_MiniPc_Tx_Data, 8);
-			//   CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
-        mod2 = 0;
-    }
-    CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);  
-    
-    if (mod10 == 10) //100Hz
-    {
-        mod10 = 0;
-    }
-
-    if (Reset_Pitch_2)
-    {
-        CAN_Send_Data(&hfdcan1, 0xf2, CAN_DM4340_Reset, 8);
-        Reset_Pitch_2 = false; // 重置标志位
-    }
-    #endif
-
-}
 
 /**
  * @brief 辅助函数：把 CAN 帧直接投递给控制任务
