@@ -1265,6 +1265,34 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     //传输数据给上位机
     MiniPC.TIM_Write_PeriodElapsedCallback();
 #elif defined(ROBOTIC_ARM)
+    const bool remote_online = (FS_I6X.Get_FS_Connection_Status() == FS_Connection_Status_ONLINE) &&
+                               !FS_I6X.Get_FS_Failsafe();
+    // 上电或重新连上遥控器后，先将 SWA 拨回 UP（关）再允许接管。
+    static bool remote_ready = false;
+    if (!remote_online)
+    {
+        remote_ready = false;
+        Test_Arm.Set_Calibration_Switch(false);
+        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
+    }
+    else
+    {
+        if (FS_I6X.Get_SWA() == FS_Switch_Status_UP)
+        {
+            remote_ready = true;
+        }
+
+        if (remote_ready)
+        {
+            Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_NORMAL);
+            Test_Arm.Set_Calibration_Switch(FS_I6X.Get_SWA() == FS_Switch_Status_DOWN);
+        }
+        else
+        {
+            Test_Arm.Set_Calibration_Switch(false);
+            Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
+        }
+    }
     Test_Arm.TIM_Calculate_PeriodElapsedCallback();
 #endif
 }
@@ -1349,12 +1377,12 @@ void Class_Chariot::TIM_CAN_Tx_PeriodElapsedCallback()
         Reset_Pitch_2 = false; // 重置标志位
     }
 #elif defined(ROBOTIC_ARM)
-    // 1ms 调度周期：每 5ms 轮询发送前三轴控制帧（单轴 200Hz），
-    // 第 5 个时间片（mod50 % 5 == 4）留给 6 轴达妙电机错峰执行 50ms 存活检测与使能/失能帧发送，
-    // 保证每 1ms 至多发送 1 帧，控制帧与使能/失能帧完全错开。
-    static uint8_t mod50 = 0;
+    // 1ms 调度周期（节拍 2）：7ms 一轮（mod49 周期 49ms），严格保证每 1ms 至多发送 1 帧：
+    // case 0~4 发送 J1~J5 控制帧（单轴约 143Hz），case 5 预留给 J6，
+    // case 6 错峰执行 J1~J6 的 49ms 存活检测与使能/失能帧发送。
+    static uint8_t mod49 = 0;
 
-    switch (mod50 % 5U)
+    switch (mod49 % 7U)
     {
         case 0U:
             Test_Arm.J1_Yaw_4340.Send_Control_Frame();
@@ -1366,26 +1394,33 @@ void Class_Chariot::TIM_CAN_Tx_PeriodElapsedCallback()
             Test_Arm.J3_Pitch_4340.Send_Control_Frame();
             break;
         case 3U:
+            Test_Arm.J4_Roll_2325.Send_Control_Frame();
             break;
         case 4U:
-            switch (mod50)
+            Test_Arm.J5_Pitch_2325.Send_Control_Frame();
+            break;
+        case 5U:
+            // 预留给 J6 控制帧
+            break;
+        case 6U:
+            switch (mod49)
             {
-                case 4U:
+                case 6U:
                     Test_Arm.J1_Yaw_4340.TIM_Alive_PeriodElapsedCallback();
                     break;
-                case 9U:
+                case 13U:
                     Test_Arm.J2_Pitch_8009P.TIM_Alive_PeriodElapsedCallback();
                     break;
-                case 14U:
+                case 20U:
                     Test_Arm.J3_Pitch_4340.TIM_Alive_PeriodElapsedCallback();
                     break;
-                case 19U:
+                case 27U:
                     Test_Arm.J4_Roll_2325.TIM_Alive_PeriodElapsedCallback();
                     break;
-                case 24U:
+                case 34U:
                     Test_Arm.J5_Pitch_2325.TIM_Alive_PeriodElapsedCallback();
                     break;
-                case 29U:
+                case 41U:
                     Test_Arm.J6_Roll_3507.TIM_Alive_PeriodElapsedCallback();
                     break;
                 default:
@@ -1396,10 +1431,10 @@ void Class_Chariot::TIM_CAN_Tx_PeriodElapsedCallback()
             break;
     }
 
-    mod50++;
-    if (mod50 >= 50U)
+    mod49++;
+    if (mod49 >= 49U)
     {
-        mod50 = 0;
+        mod49 = 0;
     }
 #endif
 }
