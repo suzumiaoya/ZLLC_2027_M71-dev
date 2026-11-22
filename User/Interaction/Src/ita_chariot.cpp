@@ -1267,31 +1267,13 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 #elif defined(ROBOTIC_ARM)
     const bool remote_online = (FS_I6X.Get_FS_Connection_Status() == FS_Connection_Status_ONLINE) &&
                                !FS_I6X.Get_FS_Failsafe();
-    // 上电或重新连上遥控器后，先将 SWA 拨回 UP（关）再允许接管。
-    static bool remote_ready = false;
-    if (!remote_online)
+    if (remote_online && FS_I6X.Get_SWA() == FS_Switch_Status_DOWN)
     {
-        remote_ready = false;
-        Test_Arm.Set_Calibration_Switch(false);
-        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
+        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_NORMAL);
     }
     else
     {
-        if (FS_I6X.Get_SWA() == FS_Switch_Status_UP)
-        {
-            remote_ready = true;
-        }
-
-        if (remote_ready)
-        {
-            Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_NORMAL);
-            Test_Arm.Set_Calibration_Switch(FS_I6X.Get_SWA() == FS_Switch_Status_DOWN);
-        }
-        else
-        {
-            Test_Arm.Set_Calibration_Switch(false);
-            Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
-        }
+        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
     }
     Test_Arm.TIM_Calculate_PeriodElapsedCallback();
 #endif
