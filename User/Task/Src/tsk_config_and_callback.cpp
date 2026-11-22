@@ -348,7 +348,8 @@ void RoboticArm_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 
 void FS_I6X_UART5_Callback(uint8_t *buffer, uint16_t length)
 {
-    chariot.FS_I6X.FS_UART_RxCpltCallback(buffer, length);
+    if (!chariot.FS_I6X.FS_UART_RxCpltCallback(buffer, length)) { return; }
+    chariot.TIM_Control_Callback();
 }
 #endif
 /**

@@ -306,6 +306,8 @@ public:
         void Contorl_Stretch_Pitch();
 
         void TIM1msMod50_Chassis_Communicate_Alive_PeriodElapsedCallback();
+    #elif defined(ROBOTIC_ARM)
+        void TIM_Control_Callback();
     #endif
 
     void TIM_Calculate_PeriodElapsedCallback();
@@ -444,6 +446,8 @@ protected:
         void Control_Booster();
 
         void Transform_Mouse_Axis();
+    #elif defined(ROBOTIC_ARM)
+        void Control_RoboticArm();
     #endif
 
 };

@@ -1265,16 +1265,6 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     //传输数据给上位机
     MiniPC.TIM_Write_PeriodElapsedCallback();
 #elif defined(ROBOTIC_ARM)
-    const bool remote_online = (FS_I6X.Get_FS_Connection_Status() == FS_Connection_Status_ONLINE) &&
-                               !FS_I6X.Get_FS_Failsafe();
-    if (remote_online && FS_I6X.Get_SWA() == FS_Switch_Status_DOWN)
-    {
-        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_NORMAL);
-    }
-    else
-    {
-        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
-    }
     Test_Arm.TIM_Calculate_PeriodElapsedCallback();
 #endif
 }
@@ -1657,6 +1647,23 @@ void Class_Chariot::TIM_Control_Callback()
     Control_Gimbal();
     Control_Booster();
 }
+#elif defined(ROBOTIC_ARM)
+void Class_Chariot::Control_RoboticArm()
+{
+    if (FS_I6X.Get_SWA() == FS_Switch_Status_DOWN)
+    {
+        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_NORMAL);
+    }
+    else
+    {
+        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
+    }
+}
+
+void Class_Chariot::TIM_Control_Callback()
+{
+    Control_RoboticArm();
+}
 #endif
 
 /**
@@ -1751,6 +1758,11 @@ void Class_Chariot::TIM_Alive_Protect_PeriodElapsedCallback()
         Gimbal_Status == Gimbal_Status_DISABLE)
     {
         Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+    }
+#elif defined(ROBOTIC_ARM)
+    if (FS_I6X.Get_FS_Connection_Status() != FS_Connection_Status_ONLINE || FS_I6X.Get_FS_Failsafe())
+    {
+        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
     }
 #endif
 }
