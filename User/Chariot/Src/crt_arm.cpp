@@ -229,7 +229,7 @@ void Class_RoboticArm::Init()
                       -2.618f, 2.618f, 1.0f, Cali_J4_Timeout_Ms);
     J5_Pitch_2325.Init(&hfdcan1, DM_Motor_ID_0x05, DM_Motor_Control_Method_POSITION_OMEGA, 200.0f, 10.0f, 158.0f, 25.0f,
                        -1.5708f, 1.5708f, 1.0f, Cali_J5_Timeout_Ms);
-    J6_Roll_3507.Init(&hfdcan1, DM_Motor_ID_0x06, DM_Motor_Control_Method_POSITION_OMEGA, 50.0f, 5.0f, 3.1415f);
+    J6_Roll_3507.Init(&hfdcan1, DM_Motor_ID_0xA6, DM_Motor_Control_Method_POSITION_OMEGA, 50.0f, 5.0f, 3.1415f);
 
     for (uint8_t joint = 0; joint < RoboticArm_Joint_NUM; ++joint)
     {
