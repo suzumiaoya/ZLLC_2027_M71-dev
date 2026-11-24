@@ -170,6 +170,8 @@ public:
     void Set_RoboticArm_Control_Type(Enum_RoboticArm_Control_Type __RoboticArm_Control_Type);
     void Set_Target_Joint_Radian(Enum_RoboticArm_Joint joint, float __Target_Radian);
     void Set_Target_Joint_Omega(Enum_RoboticArm_Joint joint, float __Target_Omega);
+    float Get_Target_Joint_Radian(Enum_RoboticArm_Joint joint) const;
+    float Get_Now_Joint_Radian(Enum_RoboticArm_Joint joint) const;
 
     bool Get_RoboticArm_Initialized() const { return RoboticArm_Initialized; }
     Enum_RoboticArm_Cali_Status Get_Calibration_Status()

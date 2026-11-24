@@ -447,6 +447,9 @@ protected:
 
         void Transform_Mouse_Axis();
     #elif defined(ROBOTIC_ARM)
+        uint32_t Arm_Stick_DWT_Cnt = 0U;
+        bool Arm_Stick_Active = false;
+
         void Control_RoboticArm();
     #endif
 

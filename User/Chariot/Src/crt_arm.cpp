@@ -283,6 +283,24 @@ void Class_RoboticArm::Set_Target_Joint_Omega(Enum_RoboticArm_Joint joint, float
     }
 }
 
+float Class_RoboticArm::Get_Target_Joint_Radian(Enum_RoboticArm_Joint joint) const
+{
+    if (joint < RoboticArm_Joint_NUM)
+    {
+        return Target_Joint_Radian[joint];
+    }
+    return 0.0f;
+}
+
+float Class_RoboticArm::Get_Now_Joint_Radian(Enum_RoboticArm_Joint joint) const
+{
+    if (joint < RoboticArm_Joint_NUM)
+    {
+        return Now_Joint_Radian[joint];
+    }
+    return 0.0f;
+}
+
 void Class_RoboticArm::Update_Feedback()
 {
     J4_Roll_2325.Update_Disconnect_Check();
@@ -439,6 +457,10 @@ void Class_RoboticArm::Run_Normal_Control()
 
     if (J4_Roll_2325.Is_Calibrated())
     {
+        if (J4_Roll_2325.Get_DM_Motor_Control_Status() == DM_Motor_Control_Status_DISABLE)
+        {
+            Target_Joint_Radian[RoboticArm_Joint_J4] = Now_Joint_Radian[RoboticArm_Joint_J4];
+        }
         J4_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
         J4_Roll_2325.Set_Joint_Target_Radian(Target_Joint_Radian[RoboticArm_Joint_J4]);
         J4_Roll_2325.Set_Joint_Target_Omega(Target_Joint_Omega[RoboticArm_Joint_J4]);
@@ -450,6 +472,10 @@ void Class_RoboticArm::Run_Normal_Control()
 
     if (J5_Pitch_2325.Is_Calibrated())
     {
+        if (J5_Pitch_2325.Get_DM_Motor_Control_Status() == DM_Motor_Control_Status_DISABLE)
+        {
+            Target_Joint_Radian[RoboticArm_Joint_J5] = Now_Joint_Radian[RoboticArm_Joint_J5];
+        }
         J5_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
         J5_Pitch_2325.Set_Joint_Target_Radian(Target_Joint_Radian[RoboticArm_Joint_J5]);
         J5_Pitch_2325.Set_Joint_Target_Omega(Target_Joint_Omega[RoboticArm_Joint_J5]);

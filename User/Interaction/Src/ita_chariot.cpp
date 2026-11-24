@@ -98,6 +98,8 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
         Test_Arm.Init();
         Arm_Board_IMU.Init();
         FS_I6X.Init(FS_I6X_Stick_Mode_2);
+        Arm_Stick_DWT_Cnt = 0U;
+        Arm_Stick_Active = false;
 
     #endif
 
@@ -1671,15 +1673,112 @@ void Class_Chariot::TIM_Control_Callback()
     Control_Booster();
 }
 #elif defined(ROBOTIC_ARM)
+namespace
+{
+// FS-i6X 摇杆死区（归一化范围 [-1, 1]）与积分时间上限
+constexpr float Arm_Stick_Dead_Zone = 0.08f;
+constexpr float Arm_Stick_Max_Dt_S = 0.05f;
+// 各关节满杆增量角速度（rad/s，不大于默认关节限速 1.0 rad/s；实机反向可直接改符号）
+constexpr float Arm_Stick_Max_Omega[RoboticArm_Joint_NUM] = {
+    0.8f, // J1 Yaw   (SWB 上拨: Left_X)
+    0.8f, // J2 Pitch (SWB 上拨: Left_Y)
+    0.8f, // J3 Pitch (SWB 上拨: Right_Y)
+    1.0f, // J4 Roll  (SWB 上拨: Right_X)
+    1.0f, // J5 Pitch (SWB 下拨: Left_Y)
+    1.0f, // J6 Roll  (SWB 下拨: Left_X)
+};
+
+float Apply_Stick_Dead_Zone(float value, float dead_zone)
+{
+    const float abs_value = fabsf(value);
+    if (abs_value <= dead_zone)
+    {
+        return 0.0f;
+    }
+    const float scaled = (abs_value - dead_zone) / (1.0f - dead_zone);
+    return (value >= 0.0f) ? scaled : -scaled;
+}
+} // namespace
+
 void Class_Chariot::Control_RoboticArm()
 {
-    if (FS_I6X.Get_SWA() == FS_Switch_Status_DOWN)
+    // SWA 下拨使能，其余档位（上拨/中位）均失能
+    if (FS_I6X.Get_SWA() != FS_Switch_Status_DOWN)
     {
-        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_NORMAL);
+        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
+        Arm_Stick_Active = false;
+        return;
+    }
+
+    Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_NORMAL);
+
+    // SWD 控制夹爪张合：上拨（开机默认）为闭合，下拨为张开
+    const Enum_Gripper_Clamp_Command clamp_cmd =
+        (FS_I6X.Get_SWD() == FS_Switch_Status_DOWN) ? Gripper_Clamp_Command_OPEN : Gripper_Clamp_Command_CLOSE;
+    Test_Arm.Gripper.Set_Gripper_Clamp_Command(clamp_cmd);
+
+    // 初次上电校准未完成前，禁止摇杆控制机械臂
+    if (!Test_Arm.Get_RoboticArm_Initialized())
+    {
+        Arm_Stick_Active = false;
+        return;
+    }
+
+    // 首次进入可控制状态仅刷新计时基准，避免首帧 dt 跳变
+    float dt = DWT_GetDeltaT(&Arm_Stick_DWT_Cnt);
+    if (!Arm_Stick_Active)
+    {
+        Arm_Stick_Active = true;
+        return;
+    }
+    if (dt <= 0.0f)
+    {
+        return;
+    }
+    if (dt > Arm_Stick_Max_Dt_S)
+    {
+        dt = Arm_Stick_Max_Dt_S;
+    }
+
+    const float left_x = Apply_Stick_Dead_Zone(FS_I6X.Get_Left_X(), Arm_Stick_Dead_Zone);
+    const float left_y = Apply_Stick_Dead_Zone(FS_I6X.Get_Left_Y(), Arm_Stick_Dead_Zone);
+    const float right_x = Apply_Stick_Dead_Zone(FS_I6X.Get_Right_X(), Arm_Stick_Dead_Zone);
+    const float right_y = Apply_Stick_Dead_Zone(FS_I6X.Get_Right_Y(), Arm_Stick_Dead_Zone);
+
+    auto step_joint = [&](Enum_RoboticArm_Joint joint, float stick_input)
+    {
+        if (stick_input == 0.0f)
+        {
+            return;
+        }
+        const float next_rad = Test_Arm.Get_Target_Joint_Radian(joint) +
+                               stick_input * Arm_Stick_Max_Omega[joint] * dt;
+        Test_Arm.Set_Target_Joint_Radian(joint, next_rad);
+    };
+
+    if (FS_I6X.Get_SWB() == FS_Switch_Status_DOWN)
+    {
+        // SWB 下拨：左摇杆控制后两轴（Left_Y -> J5 Pitch, Left_X -> J6 Roll）
+        step_joint(RoboticArm_Joint_J5, left_y);
+
+        const Enum_Gripper_Clamp_Status clamp_status = Test_Arm.Gripper.Get_Gripper_Clamp_Status();
+        if (clamp_status == Gripper_Clamp_Status_OPENED || clamp_status == Gripper_Clamp_Status_GRIPPED)
+        {
+            step_joint(RoboticArm_Joint_J6, left_x);
+        }
+        else
+        {
+            // 张合运动期间保持 J6 目标角跟随当前角，防止张合结束后突跳
+            Test_Arm.Set_Target_Joint_Radian(RoboticArm_Joint_J6, Test_Arm.Get_Now_Joint_Radian(RoboticArm_Joint_J6));
+        }
     }
     else
     {
-        Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
+        // SWB 默认上拨：左摇杆控制 J1 Yaw / J2 Pitch，右摇杆控制 J3 Pitch / J4 Roll
+        step_joint(RoboticArm_Joint_J1, left_x);
+        step_joint(RoboticArm_Joint_J2, left_y);
+        step_joint(RoboticArm_Joint_J3, right_y);
+        step_joint(RoboticArm_Joint_J4, right_x);
     }
 }
 
@@ -1787,6 +1886,7 @@ void Class_Chariot::TIM_Alive_Protect_PeriodElapsedCallback()
     if (FS_I6X.Get_FS_Connection_Status() != FS_Connection_Status_ONLINE || FS_I6X.Get_FS_Failsafe())
     {
         Test_Arm.Set_RoboticArm_Control_Type(RoboticArm_Control_Type_DISABLE);
+        Arm_Stick_Active = false;
     }
 #endif
 }
