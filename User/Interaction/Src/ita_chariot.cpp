@@ -1349,64 +1349,87 @@ void Class_Chariot::TIM_CAN_Tx_PeriodElapsedCallback()
         Reset_Pitch_2 = false; // 重置标志位
     }
 #elif defined(ROBOTIC_ARM)
-    // 1ms 调度周期（节拍 2）：7ms 一轮（mod49 周期 49ms），严格保证每 1ms 至多发送 1 帧：
-    // case 0~4 发送 J1~J5 控制帧（单轴约 143Hz），case 5 预留给 J6，
-    // case 6 错峰执行 J1~J6 的 49ms 存活检测与使能/失能帧发送。
-    static uint8_t mod49 = 0;
+    // 1ms 调度周期：50ms 一轮（mod50），任意 1ms 内 FDCAN1 最多入队 2 帧：
+    // - M2006 (0x200) 在奇数 ms（紧随 2ms 控制解算之后）发送 -> 严格 500Hz（2ms 周期）
+    // - J1~J6 控制帧每 10ms 发送 2 轮 -> 200Hz（平均 5ms 周期）
+    // - J1~J6 存活检测与使能/失能帧在 slot10 = 0/5 错峰执行 -> 20Hz（50ms 周期）
+    static uint8_t mod50 = 0;
 
-    switch (mod49 % 7U)
+    switch (mod50 % 10U)
     {
         case 0U:
-            Test_Arm.J1_Yaw_4340.Send_Control_Frame();
-            break;
-        case 1U:
-            Test_Arm.J2_Pitch_8009P.Send_Control_Frame();
-            break;
-        case 2U:
-            Test_Arm.J3_Pitch_4340.Send_Control_Frame();
-            break;
-        case 3U:
-            Test_Arm.J4_Roll_2325.Send_Control_Frame();
-            break;
-        case 4U:
-            Test_Arm.J5_Pitch_2325.Send_Control_Frame();
-            break;
-        case 5U:
-            // 预留给 J6 控制帧
-            break;
-        case 6U:
-            switch (mod49)
+            switch (mod50)
             {
-                case 6U:
-                    Test_Arm.J1_Yaw_4340.TIM_Alive_PeriodElapsedCallback();
-                    break;
-                case 13U:
+                case 10U:
                     Test_Arm.J2_Pitch_8009P.TIM_Alive_PeriodElapsedCallback();
                     break;
                 case 20U:
-                    Test_Arm.J3_Pitch_4340.TIM_Alive_PeriodElapsedCallback();
-                    break;
-                case 27U:
                     Test_Arm.J4_Roll_2325.TIM_Alive_PeriodElapsedCallback();
                     break;
-                case 34U:
-                    Test_Arm.J5_Pitch_2325.TIM_Alive_PeriodElapsedCallback();
-                    break;
-                case 41U:
-                    Test_Arm.J6_Roll_3507.TIM_Alive_PeriodElapsedCallback();
+                case 30U:
+                    Test_Arm.Gripper.DM_Motor_Rotary.TIM_Alive_PeriodElapsedCallback();
                     break;
                 default:
                     break;
             }
             break;
+        case 1U:
+            CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
+            Test_Arm.J1_Yaw_4340.Send_Control_Frame();
+            break;
+        case 2U:
+            Test_Arm.J2_Pitch_8009P.Send_Control_Frame();
+            Test_Arm.J3_Pitch_4340.Send_Control_Frame();
+            break;
+        case 3U:
+            CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
+            Test_Arm.J4_Roll_2325.Send_Control_Frame();
+            break;
+        case 4U:
+            Test_Arm.J5_Pitch_2325.Send_Control_Frame();
+            Test_Arm.Gripper.DM_Motor_Rotary.Send_Control_Frame();
+            break;
+        case 5U:
+            CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
+            switch (mod50)
+            {
+                case 5U:
+                    Test_Arm.J1_Yaw_4340.TIM_Alive_PeriodElapsedCallback();
+                    break;
+                case 15U:
+                    Test_Arm.J3_Pitch_4340.TIM_Alive_PeriodElapsedCallback();
+                    break;
+                case 25U:
+                    Test_Arm.J5_Pitch_2325.TIM_Alive_PeriodElapsedCallback();
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 6U:
+            Test_Arm.J1_Yaw_4340.Send_Control_Frame();
+            Test_Arm.J2_Pitch_8009P.Send_Control_Frame();
+            break;
+        case 7U:
+            CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
+            Test_Arm.J3_Pitch_4340.Send_Control_Frame();
+            break;
+        case 8U:
+            Test_Arm.J4_Roll_2325.Send_Control_Frame();
+            Test_Arm.J5_Pitch_2325.Send_Control_Frame();
+            break;
+        case 9U:
+            CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
+            Test_Arm.Gripper.DM_Motor_Rotary.Send_Control_Frame();
+            break;
         default:
             break;
     }
 
-    mod49++;
-    if (mod49 >= 49U)
+    mod50++;
+    if (mod50 >= 50U)
     {
-        mod49 = 0;
+        mod50 = 0;
     }
 #endif
 }
@@ -1744,6 +1767,7 @@ void Class_Chariot::TIM50ms_Alive_PeriodElapsedCallback()
     Booster.Motor_Friction_Right.TIM_Alive_PeriodElapsedCallback();
 #elif defined(ROBOTIC_ARM)
     // 达妙电机的 50ms 存活检测与使能/失能帧发送已移至 TIM_CAN_Tx_PeriodElapsedCallback() 错峰调度
+    Test_Arm.Gripper.DJI_Motor_Clamp.TIM_Alive_PeriodElapsedCallback();
     FS_I6X.TIM1msMod50_Alive_PeriodElapsedCallback();
 #endif
 }

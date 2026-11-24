@@ -132,7 +132,7 @@ struct Struct_DM_Motor_Feedback
 };
 
 /**
- * @brief 达妙电机基类，由具体型号公开初始化接口
+ * @brief 达妙电机通用驱动基类（标准输出轴侧协议，可直接实例化或派生特化）
  */
 class Class_DM_Motor
 {
@@ -143,7 +143,11 @@ public:
     // PID角速度环控制
     Class_PID PID_Omega;
 
+    Class_DM_Motor() = default;
+    Class_DM_Motor(const Class_DM_Motor&) = default;
     virtual ~Class_DM_Motor() = default;
+
+    void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method, float __Omega_Max, float __Torque_Max, float __Angle_Max);
 
     Enum_DM_Motor_Status Get_DM_Motor_Status();
     Enum_DM_Motor_Control_Status Get_DM_Motor_Control_Status();
@@ -183,10 +187,6 @@ public:
     uint8_t Send_Control_Frame();
 
 protected:
-    Class_DM_Motor() = default;
-    Class_DM_Motor(const Class_DM_Motor&) = default;
-    void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method, float __Omega_Max, float __Torque_Max, float __Angle_Max);
-
     //初始化相关变量
     Struct_CAN_Manage_Object *CAN_Manage_Object = nullptr;
     Enum_DM_Motor_ID CAN_ID;
@@ -218,69 +218,7 @@ protected:
 
     //内部函数
     virtual void Pack_Control_Frame(float angle, float omega, float torque, float kp, float kd);
-    // 使用相同反馈协议的子类应先调用父类实现, 再转换到输出轴侧
     virtual void Data_Process(uint8_t *Rx_Data);
-};
-
-/**
- * @brief 达妙电机经过处理的数据, 扭矩非国际单位制
- *
- */
-struct Struct_DM_Motor_Rx_Data
-{
-    uint8_t CAN_ID; // 反馈 D0 的低四位
-    Enum_DM_Motor_ErrorCode ErrorCode;
-    float Now_Angle;
-    float Now_Omega;
-    float Now_Torque;
-    float Now_MOS_Temperature;
-    float Now_Rotor_Temperature;
-    uint16_t Pre_Position;
-    int32_t Total_Position;
-    int32_t Total_Round;
-};
-
-/**
- * @brief J4310无刷电机, 单片机控制输出控制帧
- * DM_Motor_Control_Method_POSITION_OMEGA模式下, 需调参助手辅助设置位置环PI参数, 空载250与0
- * 
- * PMAX值需在调参助手设置为3.141593, 即PI, 此时可在MIT模式下当舵机使用
- *
- */
-class Class_DM_Motor_J4310 : public Class_DM_Motor
-{
-public:
-
-    virtual void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method = DM_Motor_Control_Method_MIT_POSITION, float __Omega_Max = 30.0f, float __Torque_Max = 10.0f, float __Angle_Max = PI);
-
-    float Get_Out();
-    void Set_Out(float __Out);
-    void Limit_Out();
-
-protected:
-    //输出量
-    float Out = 0.0f;
-
-    void Output();
-};
-
-/**
- * @brief S2325 及采用相同转子侧协议的增量式电机。角度以本次上电位置为零点。
- * 量程与上位机 VMAX/TMAX/PMAX 一致；PMAX 应覆盖减速比乘以关节全行程并留有余量。
- * 减速比为转子速度 / 输出轴速度；传 1 可直接使用转子侧单位。
- */
-class Class_DM_Motor_S2325 : public Class_DM_Motor
-{
-public:
-    void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method,
-              float __Omega_Max, float __Torque_Max, float __Angle_Max, float __Gear_Ratio);
-
-protected:
-    void Pack_Control_Frame(float angle, float omega, float torque, float kp, float kd) override;
-    void Data_Process(uint8_t *Rx_Data) override;
-
-private:
-    float Gear_Ratio = 1.0f;
 };
 
 /* Exported variables --------------------------------------------------------*/

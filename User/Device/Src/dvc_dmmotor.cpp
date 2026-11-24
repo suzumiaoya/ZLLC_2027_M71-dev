@@ -278,7 +278,7 @@ void Class_DM_Motor::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, 
 }
 
 /**
- * @brief 解码达妙电机反馈, 位置、速度和扭矩暂按驱动器反馈轴侧保存
+ * @brief 解码达妙电机反馈数据
  */
 void Class_DM_Motor::Data_Process(uint8_t *Rx_Data)
 {
@@ -387,14 +387,6 @@ void Class_DM_Motor::TIM_PID_PeriodElapsedCallback()
 }
 
 /**
- * @brief 电机初始化
- */
-void Class_DM_Motor_J4310::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method, float __Omega_Max, float __Torque_Max, float __Angle_Max)
-{
-    Class_DM_Motor::Init(hcan, __CAN_ID, __Control_Method, __Omega_Max, __Torque_Max, __Angle_Max);
-}
-
-/**
  * @brief TIM定时器中断发送出去的回调函数
  *
  */
@@ -494,92 +486,6 @@ uint8_t Class_DM_Motor::Send_Control_Frame()
         Control_Tx_Length = 0;
     }
     return (status);
-}
-
-void Class_DM_Motor_S2325::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method,
-                                float __Omega_Max, float __Torque_Max, float __Angle_Max, float __Gear_Ratio)
-{
-    Class_DM_Motor::Init(hcan, __CAN_ID, __Control_Method, __Omega_Max, __Torque_Max, __Angle_Max);
-    Gear_Ratio = __Gear_Ratio;
-}
-
-void Class_DM_Motor_S2325::Data_Process(uint8_t *Rx_Data)
-{
-    Class_DM_Motor::Data_Process(Rx_Data);
-    Data.Now_Angle /= Gear_Ratio;
-    Data.Now_Omega /= Gear_Ratio;
-    Data.Now_Torque *= Gear_Ratio;
-}
-
-void Class_DM_Motor_S2325::Pack_Control_Frame(float angle, float omega, float torque, float kp, float kd)
-{
-    angle *= Gear_Ratio;
-    omega *= Gear_Ratio;
-    torque /= Gear_Ratio;
-    kp = kp / Gear_Ratio / Gear_Ratio;
-    kd = kd / Gear_Ratio / Gear_Ratio;
-
-    Class_DM_Motor::Pack_Control_Frame(angle, omega, torque, kp, kd);
-}
-
-void Class_DM_Motor_J4310::Output()
-{
-    switch (DM_Motor_Control_Method) {
-        case (DM_Motor_Control_Method_MIT_IMU_Angle):
-        case (DM_Motor_Control_Method_MIT_OPENLOOP): {
-            Limit_Out();
-
-            uint16_t tmp_out = Math_Float_To_Int(Out, -4095, 4095, 0, (1 << 12) - 1);
-
-            uint8_t tmp_torque_6 = (tmp_out >> 8) & 0x0F;
-            memcpy(&CAN_Tx_Data[6], &tmp_torque_6, sizeof(uint8_t));
-
-            uint8_t tmp_torque_7 = tmp_out & 0xFF;
-            memcpy(&CAN_Tx_Data[7], &tmp_torque_7, sizeof(uint8_t));
-
-            uint8_t tmp_torque[6] = {0x7F, 0xFF, 0x7F, 0xF0, 0x00, 0x00};
-            for (uint8_t i = 0; i < 6; i++) {
-                memcpy(&CAN_Tx_Data[i], &tmp_torque[i], sizeof(uint8_t));
-            }
-        } break;
-    }
-}
-
-/**
- * @brief 获取目标的输出
- *
- * @return float 目标的输出
- */
-float Class_DM_Motor_J4310::Get_Out()
-{
-    return (Out);
-}
-
-/**
- * @brief 设定目标的输出
- *
- * @param __Out 目标的输出
- */
-
-void Class_DM_Motor_J4310::Set_Out(float __Out)
-{
-    Out = __Out;
-}
-
-/**
- * @brief 限制目标的输出
- *
- * @param __Out 目标的输出
- */
-void Class_DM_Motor_J4310::Limit_Out()
-{
-    if (Out > 4095)
-        Out = 4095;
-    else if (Out < -4095)
-        Out = -4095;
-
-    else {
-    }
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

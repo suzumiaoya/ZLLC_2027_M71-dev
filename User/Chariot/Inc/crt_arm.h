@@ -2,6 +2,7 @@
 #define CRT_ARM_H
 
 #include "alg_fsm.h"
+#include "crt_gripper.h"
 #include "dvc_dmmotor.h"
 
 /**
@@ -60,14 +61,14 @@ enum Enum_RoboticArm_Cali_Status : uint8_t {
  */
 struct Struct_Joint_S2325_Cali {
     // 可调标定参数（可在调试器 Watch 中直接修改标定）
-    float Cali_Omega = 0.25f;                               // 校准与回中速度，rad/s
-    float Locked_Torque = 1.8f;                             // 堵转扭矩阈值，Nm
-    float Locked_Omega = 0.05f;                             // 堵转角速度阈值，rad/s
+    float Cali_Omega = 2.0f;                                // 校准与回中速度，rad/s
+    float Locked_Torque = 2.0f;                             // 堵转扭矩阈值，Nm
+    float Locked_Omega = 0.16f;                             // 堵转角速度阈值，rad/s（VMAX=200 时 1 LSB≈0.0977，静止码值±0.0488，1 LSB 抖动±0.1465）
     uint16_t Confirm_Count = 25U;                           // 堵转连续判定计数（2ms 周期下 25 次 = 50ms）
     uint16_t Decay_Step = 4U;                               // 不满足堵转条件时每次递减步长
     uint32_t Timeout_Ms = 25000U;                           // 正向找限位超时时间，ms
     float Return_Zero_Tolerance_Radian = 2.0f * DEG_TO_RAD; // 回中到位阈值，rad
-    float Search_Extra_Radian = 0.5f;                       // 搜索目标超出满行程余量，rad
+    float Search_Extra_Radian = 0.25f;                       // 搜索目标超出满行程余量，rad
 
     // 运行态与调试观测字段
     float Zero_Offset = 0.0f;                               // 电机输出轴侧零点偏置：Joint_Rad = Scale * (Motor_Angle - Zero_Offset)
@@ -81,7 +82,7 @@ struct Struct_Joint_S2325_Cali {
  * @brief Specialized, 机械臂 J4310 系列单电机关节类（关节换算/限位 + 仅打包控制帧）
  *
  */
-class Class_Joint_DM_J4310 : public Class_DM_Motor_J4310
+class Class_Joint_DM_J4310 : public Class_DM_Motor
 {
 public:
     void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method,
@@ -107,7 +108,7 @@ private:
  * @brief Specialized, 机械臂 S2325 系列单电机增量关节类（关节换算/限位 + 单轴校准 FSM + 仅打包控制帧）
  *
  */
-class Class_Joint_DM_S2325 : public Class_DM_Motor_S2325
+class Class_Joint_DM_S2325 : public Class_DM_Motor
 {
 public:
     // 单轴校准状态机与标定观测数据（公开便于 Watch 调试）
@@ -115,7 +116,7 @@ public:
     Struct_Joint_S2325_Cali Cali;
 
     void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method,
-              float __Omega_Max, float __Torque_Max, float __Angle_Max, float __Gear_Ratio,
+              float __Omega_Max, float __Torque_Max, float __Angle_Max,
               float joint_min_rad, float joint_max_rad, float motor_to_joint_scale, uint32_t cali_timeout_ms);
     void TIM_Process_PeriodElapsedCallback() override;
 
@@ -152,13 +153,13 @@ private:
 class Class_RoboticArm
 {
 public:
-    // 成员关节电机
+    // 成员关节电机与末端夹爪
     Class_Joint_DM_J4310 J1_Yaw_4340;
     Class_Joint_DM_J4310 J2_Pitch_8009P;
     Class_Joint_DM_J4310 J3_Pitch_4340;
     Class_Joint_DM_S2325 J4_Roll_2325;
     Class_Joint_DM_S2325 J5_Pitch_2325;
-    Class_DM_Motor_J4310 J6_Roll_3507;
+    Class_Gripper Gripper;
 
     // 整臂校准协调状态机（公开便于 Watch 调试）
     Class_FSM Calibration_FSM;

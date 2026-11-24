@@ -330,7 +330,13 @@ void RoboticArm_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 
         case(0x16):
         {
-            chariot.Test_Arm.J6_Roll_3507.CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Test_Arm.Gripper.DM_Motor_Rotary_CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+
+        case(0x204):
+        {
+            chariot.Test_Arm.Gripper.DJI_Motor_Clamp_CAN_RxCpltCallback(CAN_RxMessage->Data);
         }
         break;
     }

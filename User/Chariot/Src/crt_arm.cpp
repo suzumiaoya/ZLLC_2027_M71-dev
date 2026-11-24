@@ -39,7 +39,7 @@ void Class_Joint_DM_J4310::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CA
                                 float __Omega_Max, float __Torque_Max, float __Angle_Max,
                                 float joint_min_rad, float joint_max_rad, float motor_to_joint_scale)
 {
-    Class_DM_Motor_J4310::Init(hcan, __CAN_ID, __Control_Method, __Omega_Max, __Torque_Max, __Angle_Max);
+    Class_DM_Motor::Init(hcan, __CAN_ID, __Control_Method, __Omega_Max, __Torque_Max, __Angle_Max);
     Joint_Min_Radian = joint_min_rad;
     Joint_Max_Radian = joint_max_rad;
     Motor_To_Joint_Scale = motor_to_joint_scale;
@@ -62,10 +62,10 @@ void Class_Joint_DM_J4310::Set_Joint_Target_Omega(float max_joint_omega)
 }
 
 void Class_Joint_DM_S2325::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method,
-                                float __Omega_Max, float __Torque_Max, float __Angle_Max, float __Gear_Ratio,
+                                float __Omega_Max, float __Torque_Max, float __Angle_Max,
                                 float joint_min_rad, float joint_max_rad, float motor_to_joint_scale, uint32_t cali_timeout_ms)
 {
-    Class_DM_Motor_S2325::Init(hcan, __CAN_ID, __Control_Method, __Omega_Max, __Torque_Max, __Angle_Max, __Gear_Ratio);
+    Class_DM_Motor::Init(hcan, __CAN_ID, __Control_Method, __Omega_Max, __Torque_Max, __Angle_Max);
     Joint_Min_Radian = joint_min_rad;
     Joint_Max_Radian = joint_max_rad;
     Motor_To_Joint_Scale = motor_to_joint_scale;
@@ -225,11 +225,12 @@ void Class_RoboticArm::Init()
                         0.0f, 1.7279f, 1.0f);
     J3_Pitch_4340.Init(&hfdcan1, DM_Motor_ID_0x03, DM_Motor_Control_Method_POSITION_OMEGA, 20.0f, 25.0f, 12.5f,
                        -3.1416f, 0.0f, 1.0f);
-    J4_Roll_2325.Init(&hfdcan1, DM_Motor_ID_0x04, DM_Motor_Control_Method_POSITION_OMEGA, 200.0f, 10.0f, 310.0f, 25.0f,
-                      -2.618f, 2.618f, 1.0f, Cali_J4_Timeout_Ms);
-    J5_Pitch_2325.Init(&hfdcan1, DM_Motor_ID_0x05, DM_Motor_Control_Method_POSITION_OMEGA, 200.0f, 10.0f, 158.0f, 25.0f,
+    // J4 S2325 驱动器内置 GR 锁死为 19.2032，机械实际减速比为 25，用 Motor_To_Joint_Scale 补齐差值。
+    J4_Roll_2325.Init(&hfdcan1, DM_Motor_ID_0x04, DM_Motor_Control_Method_POSITION_OMEGA, 200.0f, 10.0f, 122.0f,
+                      -2.618f, 2.618f, 19.2032f / 25.0f, Cali_J4_Timeout_Ms);
+    J5_Pitch_2325.Init(&hfdcan1, DM_Motor_ID_0x05, DM_Motor_Control_Method_POSITION_OMEGA, 200.0f, 10.0f, 80.0f,
                        -1.5708f, 1.5708f, 1.0f, Cali_J5_Timeout_Ms);
-    J6_Roll_3507.Init(&hfdcan1, DM_Motor_ID_0xA6, DM_Motor_Control_Method_POSITION_OMEGA, 50.0f, 5.0f, 3.1415f);
+    Gripper.Init();
 
     for (uint8_t joint = 0; joint < RoboticArm_Joint_NUM; ++joint)
     {
@@ -266,6 +267,7 @@ void Class_RoboticArm::Set_Target_Joint_Radian(Enum_RoboticArm_Joint joint, floa
             Math_Constrain(&__Target_Radian, J5_Pitch_2325.Get_Joint_Min_Radian(), J5_Pitch_2325.Get_Joint_Max_Radian());
             break;
         case RoboticArm_Joint_J6:
+            __Target_Radian = Normalize_Angle_Radian_PI_to_PI(__Target_Radian);
             break;
         default:
             return;
@@ -300,8 +302,8 @@ void Class_RoboticArm::Update_Feedback()
     Now_Joint_Omega[RoboticArm_Joint_J4] = J4_Roll_2325.Get_Joint_Omega();
     Now_Joint_Radian[RoboticArm_Joint_J5] = J5_Pitch_2325.Get_Joint_Radian();
     Now_Joint_Omega[RoboticArm_Joint_J5] = J5_Pitch_2325.Get_Joint_Omega();
-    Now_Joint_Radian[RoboticArm_Joint_J6] = J6_Roll_3507.Get_Now_Angle();
-    Now_Joint_Omega[RoboticArm_Joint_J6] = J6_Roll_3507.Get_Now_Omega();
+    Now_Joint_Radian[RoboticArm_Joint_J6] = Gripper.Get_Now_Roll_Radian();
+    Now_Joint_Omega[RoboticArm_Joint_J6] = Gripper.Get_Now_Roll_Omega_Radian();
 }
 
 void Class_RoboticArm::Disable_Controlled_Joints()
@@ -465,6 +467,7 @@ void Class_RoboticArm::Output()
     J3_Pitch_4340.TIM_Process_PeriodElapsedCallback();
     J4_Roll_2325.TIM_Process_PeriodElapsedCallback();
     J5_Pitch_2325.TIM_Process_PeriodElapsedCallback();
+    Gripper.TIM_Calculate_PeriodElapsedCallback();
 }
 
 void Class_RoboticArm::TIM_Calculate_PeriodElapsedCallback()
@@ -473,6 +476,14 @@ void Class_RoboticArm::TIM_Calculate_PeriodElapsedCallback()
 
     if (RoboticArm_Control_Type == RoboticArm_Control_Type_NORMAL)
     {
+        // 夹爪不与 J4/J5 校准阶段联动，切入 NORMAL 即直接使能（无扰锁存当前 Roll 角）
+        if (Gripper.Get_Gripper_Control_Type() == Gripper_Control_Type_DISABLE)
+        {
+            Target_Joint_Radian[RoboticArm_Joint_J6] = Now_Joint_Radian[RoboticArm_Joint_J6];
+        }
+        Gripper.Set_Gripper_Control_Type(Gripper_Control_Type_ENABLE);
+        Gripper.Set_Target_Roll(Target_Joint_Radian[RoboticArm_Joint_J6], Target_Joint_Omega[RoboticArm_Joint_J6]);
+
         if (Calibration_FSM.Get_Now_Status_Serial() == RoboticArm_Cali_Status_DONE)
         {
             Run_Normal_Control();
@@ -485,6 +496,7 @@ void Class_RoboticArm::TIM_Calculate_PeriodElapsedCallback()
     else
     {
         Disable_Controlled_Joints();
+        Gripper.Set_Gripper_Control_Type(Gripper_Control_Type_DISABLE);
         // 校准未完成时切回 DISABLE，不保留半成品状态，下次完整重校；已完成校准的则保留状态。
         if (Calibration_FSM.Get_Now_Status_Serial() != RoboticArm_Cali_Status_DONE &&
             Calibration_FSM.Get_Now_Status_Serial() != RoboticArm_Cali_Status_WAIT_START)

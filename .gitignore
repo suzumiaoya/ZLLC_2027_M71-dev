@@ -103,3 +103,10 @@ MDK-ARM/output/ZLLC_2027.hex
 .agents/skills/mcu-variables/references/writing.md
 .agents/skills/mcu-variables/scripts/read.js
 .agents/skills/mcu-variables/scripts/sampling.js
+.agents/skills/_emberprobe/bridge-locator.js
+.agents/skills/_emberprobe/tool-output.js
+.agents/skills/_emberprobe/probe-choice.js
+.agents/skills/mcu-rtt/.emberprobe-skill.json
+.agents/skills/mcu-rtt/SKILL.md
+.agents/skills/mcu-rtt/agents/openai.yaml
+.agents/skills/mcu-rtt/scripts/rtt.js

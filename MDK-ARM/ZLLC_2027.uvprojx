@@ -440,6 +440,11 @@
               <FileType>8</FileType>
               <FilePath>..\User\Chariot\Src\crt_arm.cpp</FilePath>
             </File>
+            <File>
+              <FileName>crt_gripper.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Chariot\Src\crt_gripper.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -31,6 +31,63 @@ extern uint8_t DM_Motor_CAN_Message_Enter[8];
 extern uint8_t DM_Motor_CAN_Message_Exit[8];
 
 /**
+ * @brief 初始化云台俯仰达妙电机（兼容旧默认量程）
+ */
+void Class_Gimbal_Pitch_Motor_DM4310::Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID,
+                                           Enum_DM_Motor_Control_Method __Control_Method,
+                                           float __Omega_Max, float __Torque_Max, float __Angle_Max)
+{
+    Class_DM_Motor::Init(hcan, __CAN_ID, __Control_Method, __Omega_Max, __Torque_Max, __Angle_Max);
+}
+
+float Class_Gimbal_Pitch_Motor_DM4310::Get_Out()
+{
+    return (Out);
+}
+
+void Class_Gimbal_Pitch_Motor_DM4310::Set_Out(float __Out)
+{
+    Out = __Out;
+}
+
+void Class_Gimbal_Pitch_Motor_DM4310::Limit_Out()
+{
+    if (Out > 4095)
+        Out = 4095;
+    else if (Out < -4095)
+        Out = -4095;
+}
+
+void Class_Gimbal_Pitch_Motor_DM4310::Output()
+{
+    switch (DM_Motor_Control_Method)
+    {
+    case (DM_Motor_Control_Method_MIT_IMU_Angle):
+    case (DM_Motor_Control_Method_MIT_OPENLOOP):
+    {
+        Limit_Out();
+
+        uint16_t tmp_out = Math_Float_To_Int(Out, -4095, 4095, 0, (1 << 12) - 1);
+
+        uint8_t tmp_torque_6 = (tmp_out >> 8) & 0x0F;
+        memcpy(&CAN_Tx_Data[6], &tmp_torque_6, sizeof(uint8_t));
+
+        uint8_t tmp_torque_7 = tmp_out & 0xFF;
+        memcpy(&CAN_Tx_Data[7], &tmp_torque_7, sizeof(uint8_t));
+
+        uint8_t tmp_torque[6] = {0x7F, 0xFF, 0x7F, 0xF0, 0x00, 0x00};
+        for (uint8_t i = 0; i < 6; i++)
+        {
+            memcpy(&CAN_Tx_Data[i], &tmp_torque[i], sizeof(uint8_t));
+        }
+    }
+    break;
+    default:
+        break;
+    }
+}
+
+/**
  * @brief 保留云台俯仰电机原有的使能策略
  */
 void Class_Gimbal_Pitch_Motor_DM4310::TIM_Alive_PeriodElapsedCallback()
@@ -113,7 +170,7 @@ void Class_Gimbal_Pitch_Motor_DM4310::TIM_PID_PeriodElapsedCallback()
         }
         break;
     }
-    Output();//进入父类中进行输出	
+    Output(); // 打包输出到发送缓存
 }
 
 void Class_Gimbal_Pitch_Motor_DM4310::Disable()
