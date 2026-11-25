@@ -28,6 +28,7 @@ virtualFolder:
         - path: User/Chariot/Src/crt_gimbal.cpp
         - path: User/Chariot/Src/crt_arm.cpp
         - path: User/Chariot/Src/crt_gripper.cpp
+        - path: User/Chariot/Src/crt_arm_kinematics.cpp
       folders: []
     - name: Device
       files:
@@ -76,6 +77,7 @@ virtualFolder:
         - path: User/Algorithm/Src/QuaternionEKF.cpp
         - path: User/Algorithm/Src/user_lib.cpp
         - path: User/Algorithm/Src/alg_new_power_limit.cpp
+        - path: User/Algorithm/Src/alg_urdf_kinematics.cpp
       folders: []
     - name: Application
       files: []
