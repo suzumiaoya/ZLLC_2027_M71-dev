@@ -216,6 +216,30 @@ void Class_Joint_DM_S2325::Step_Calibration(uint32_t period_ms)
     }
 }
 
+void Class_Joint_Gripper::Init(float roll_sign, float zero_offset_rad)
+{
+    Class_Gripper::Init();
+    // 保持父类 Class_Gripper 内部差动随动方向不变，仅在对外关节边界做 URDF 符号与零偏对齐
+    Roll_Sign = (roll_sign < 0.0f) ? -1.0f : 1.0f;
+    Joint_Zero_Offset = zero_offset_rad;
+}
+
+void Class_Joint_Gripper::Set_Joint_Target_Radian(float target_joint_radian, float max_joint_omega)
+{
+    const float target_roll_radian = Normalize_Angle_Radian_PI_to_PI(target_joint_radian * Roll_Sign + Joint_Zero_Offset);
+    Set_Target_Roll(target_roll_radian, max_joint_omega);
+}
+
+float Class_Joint_Gripper::Get_Joint_Radian() const
+{
+    return Normalize_Angle_Radian_PI_to_PI(Roll_Sign * (Get_Now_Roll_Radian() - Joint_Zero_Offset));
+}
+
+float Class_Joint_Gripper::Get_Joint_Omega() const
+{
+    return Roll_Sign * Get_Now_Roll_Omega_Radian();
+}
+
 void Class_RoboticArm::Init()
 {
     // 量程参数顺序：VMAX、TMAX、PMAX（FDCAN1 反馈 ID：0x11～0x16）；限位对应 M71_predev.urdf。
@@ -230,7 +254,9 @@ void Class_RoboticArm::Init()
                       -2.618f, 2.618f, 19.2032f / 25.0f, Cali_J4_Timeout_Ms);
     J5_Pitch_2325.Init(&hfdcan1, DM_Motor_ID_0x05, DM_Motor_Control_Method_POSITION_OMEGA, 200.0f, 10.0f, 80.0f,
                        -1.5708f, 1.5708f, 1.0f, Cali_J5_Timeout_Ms);
-    Gripper.Init();
+    Gripper.Init(1.0f, 0.0f);
+    Kinematics.Init();
+    Now_TCP_Pose = {};
 
     for (uint8_t joint = 0; joint < RoboticArm_Joint_NUM; ++joint)
     {
@@ -320,8 +346,11 @@ void Class_RoboticArm::Update_Feedback()
     Now_Joint_Omega[RoboticArm_Joint_J4] = J4_Roll_2325.Get_Joint_Omega();
     Now_Joint_Radian[RoboticArm_Joint_J5] = J5_Pitch_2325.Get_Joint_Radian();
     Now_Joint_Omega[RoboticArm_Joint_J5] = J5_Pitch_2325.Get_Joint_Omega();
-    Now_Joint_Radian[RoboticArm_Joint_J6] = Gripper.Get_Now_Roll_Radian();
-    Now_Joint_Omega[RoboticArm_Joint_J6] = Gripper.Get_Now_Roll_Omega_Radian();
+    Now_Joint_Radian[RoboticArm_Joint_J6] = Gripper.Get_Joint_Radian();
+    Now_Joint_Omega[RoboticArm_Joint_J6] = Gripper.Get_Joint_Omega();
+
+    // 每控制周期基于实时关节反馈刷新末端 TCP 位姿（当前仅用于观测）
+    Kinematics.Fkine(Now_Joint_Radian, &Now_TCP_Pose);
 }
 
 void Class_RoboticArm::Disable_Controlled_Joints()
@@ -508,7 +537,7 @@ void Class_RoboticArm::TIM_Calculate_PeriodElapsedCallback()
             Target_Joint_Radian[RoboticArm_Joint_J6] = Now_Joint_Radian[RoboticArm_Joint_J6];
         }
         Gripper.Set_Gripper_Control_Type(Gripper_Control_Type_ENABLE);
-        Gripper.Set_Target_Roll(Target_Joint_Radian[RoboticArm_Joint_J6], Target_Joint_Omega[RoboticArm_Joint_J6]);
+        Gripper.Set_Joint_Target_Radian(Target_Joint_Radian[RoboticArm_Joint_J6], Target_Joint_Omega[RoboticArm_Joint_J6]);
 
         if (Calibration_FSM.Get_Now_Status_Serial() == RoboticArm_Cali_Status_DONE)
         {

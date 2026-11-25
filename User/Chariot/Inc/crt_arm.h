@@ -2,6 +2,7 @@
 #define CRT_ARM_H
 
 #include "alg_fsm.h"
+#include "crt_arm_kinematics.h"
 #include "crt_gripper.h"
 #include "dvc_dmmotor.h"
 
@@ -147,6 +148,24 @@ private:
 
 
 /**
+ * @brief Specialized, 机械臂 J6 旋转夹爪关节类（在纯净 Class_Gripper 外层承担 URDF 对齐与零偏换算）
+ *
+ */
+class Class_Joint_Gripper : public Class_Gripper
+{
+public:
+    void Init(float roll_sign = 1.0f, float zero_offset_rad = 0.0f);
+    void Set_Joint_Target_Radian(float target_joint_radian, float max_joint_omega = 5.0f);
+    float Get_Joint_Radian() const;
+    float Get_Joint_Omega() const;
+
+private:
+    float Roll_Sign = 1.0f;
+    float Joint_Zero_Offset = 0.0f;
+};
+
+
+/**
  * @brief Specialized, 机械臂类
  *
  */
@@ -159,10 +178,11 @@ public:
     Class_Joint_DM_J4310 J3_Pitch_4340;
     Class_Joint_DM_S2325 J4_Roll_2325;
     Class_Joint_DM_S2325 J5_Pitch_2325;
-    Class_Gripper Gripper;
+    Class_Joint_Gripper Gripper;
 
-    // 整臂校准协调状态机（公开便于 Watch 调试）
+    // 整臂校准协调状态机与运动学解算器（公开便于 Watch 调试与外部调用）
     Class_FSM Calibration_FSM;
+    Class_RoboticArm_Kinematics Kinematics;
 
     void Init();
     void TIM_Calculate_PeriodElapsedCallback();
@@ -172,6 +192,7 @@ public:
     void Set_Target_Joint_Omega(Enum_RoboticArm_Joint joint, float __Target_Omega);
     float Get_Target_Joint_Radian(Enum_RoboticArm_Joint joint) const;
     float Get_Now_Joint_Radian(Enum_RoboticArm_Joint joint) const;
+    const Struct_URDF_Pose &Get_Now_TCP_Pose() const { return Now_TCP_Pose; }
 
     bool Get_RoboticArm_Initialized() const { return RoboticArm_Initialized; }
     Enum_RoboticArm_Cali_Status Get_Calibration_Status()
@@ -199,6 +220,8 @@ private:
     // 机械臂各关节当前实际角度和角速度
     float Now_Joint_Radian[RoboticArm_Joint_NUM] = {0};
     float Now_Joint_Omega[RoboticArm_Joint_NUM] = {0};
+    // 实时正运动学解算的末端 TCP 位姿（供调试观测）
+    Struct_URDF_Pose Now_TCP_Pose = {};
 };
 
 #endif
