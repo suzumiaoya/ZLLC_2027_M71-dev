@@ -14,17 +14,16 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "alg_math_3d.h"
+#include "alg_urdf_math.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
 static constexpr uint8_t URDF_MAX_DOF = 8U;
 static constexpr uint8_t URDF_MAX_JOINTS = 12U;
 static constexpr uint8_t URDF_MAX_IK_SOLUTIONS = 8U;
+static constexpr uint8_t URDF_JOINT_END = 0xFFU;
 
 /* Exported types ------------------------------------------------------------*/
-
-using Struct_URDF_Pose = Struct_Pose_3D;
 
 /**
  * @brief URDF 关节类型
@@ -41,7 +40,7 @@ enum Enum_URDF_Joint_Type : uint8_t
  * @brief URDF 单关节及子连杆统一描述（运动学与动力学共用）
  *
  */
-struct Struct_URDF_Joint_Model
+struct Struct_URDF_Joint
 {
     Enum_URDF_Joint_Type type;
     int8_t q_index;   // 活动关节对应 q[] 下标（0 ~ dof-1），FIXED 为 -1
@@ -64,7 +63,7 @@ struct Struct_URDF_Model
 {
     uint8_t joint_num; // 链路上总关节数（含 FIXED，<= URDF_MAX_JOINTS）
     uint8_t dof;       // 活动自由度数（<= URDF_MAX_DOF）
-    const Struct_URDF_Joint_Model *joints;
+    const Struct_URDF_Joint *joints;
 };
 
 /**
@@ -108,9 +107,8 @@ public:
 
     void Init(const Struct_URDF_Model *model);
 
-    // 正运动学：沿 URDF 链递推至末端，或递推至指定关节下标 target_joint_idx
-    bool Fkine(const float *q, Struct_URDF_Pose *pose);
-    bool Fkine(const float *q, uint8_t target_joint_idx, Struct_URDF_Pose *pose);
+    // 正运动学：默认沿 URDF 链递推至末端（URDF_JOINT_END），或传入指定关节下标
+    bool Fkine(const float *q, Struct_URDF_Pose *pose, uint8_t target_joint_idx = URDF_JOINT_END);
 
     // 解析逆运动学虚接口：直接调用基类实现会在编译期触发 deprecated 告警，运行时返回 false
     __attribute__((deprecated("Class_URDF_Kinematics::Ikine has no analytical solver; override in subclass")))

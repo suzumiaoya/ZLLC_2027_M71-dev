@@ -13,6 +13,8 @@
 
 #include "alg_urdf_kinematics.h"
 
+using namespace urdf_math;
+
 /* Function prototypes -------------------------------------------------------*/
 
 void Class_URDF_Kinematics::Init(const Struct_URDF_Model *model)
@@ -32,7 +34,7 @@ void Class_URDF_Kinematics::Init(const Struct_URDF_Model *model)
 
     for (uint8_t i = 0U; i < model->joint_num; ++i)
     {
-        const Struct_URDF_Joint_Model &j = model->joints[i];
+        const Struct_URDF_Joint &j = model->joints[i];
         if (j.type != URDF_Joint_Type_FIXED)
         {
             if ((j.q_index < 0) || (j.q_index >= static_cast<int8_t>(model->dof)))
@@ -45,37 +47,37 @@ void Class_URDF_Kinematics::Init(const Struct_URDF_Model *model)
     Model = model;
 }
 
-bool Class_URDF_Kinematics::Fkine(const float *q, Struct_URDF_Pose *pose)
+bool Class_URDF_Kinematics::Fkine(const float *q, Struct_URDF_Pose *pose, uint8_t target_joint_idx)
 {
-    if (Model == nullptr)
+    if ((Model == nullptr) || (pose == nullptr))
     {
         return false;
     }
-    return Fkine(q, static_cast<uint8_t>(Model->joint_num - 1U), pose);
-}
 
-bool Class_URDF_Kinematics::Fkine(const float *q, uint8_t target_joint_idx, Struct_URDF_Pose *pose)
-{
-    if ((Model == nullptr) || (pose == nullptr) || (target_joint_idx >= Model->joint_num))
+    const uint8_t end_idx = (target_joint_idx == URDF_JOINT_END)
+                                ? static_cast<uint8_t>(Model->joint_num - 1U)
+                                : target_joint_idx;
+    if (end_idx >= Model->joint_num)
     {
         return false;
     }
 
     float P[3] = {0.0f, 0.0f, 0.0f};
     float R[9];
-    Alg_Mat3_Identity(R);
+    Mat3_Identity(R);
 
-    for (uint8_t i = 0U; i <= target_joint_idx; ++i)
+    // 依次累加各连杆原点平移并右乘固定旋转与关节旋转：P += R * xyz; R = R * R_fixed * R_joint
+    for (uint8_t i = 0U; i <= end_idx; ++i)
     {
-        const Struct_URDF_Joint_Model &joint = Model->joints[i];
+        const Struct_URDF_Joint &joint = Model->joints[i];
 
         float dp[3];
-        Alg_Mat3_Mul_Vec3(R, joint.xyz, dp);
+        Mat3_Mul_Vec3(R, joint.xyz, dp);
         P[0] += dp[0];
         P[1] += dp[1];
         P[2] += dp[2];
 
-        Alg_Mat3_Mul(R, joint.R_fixed, R);
+        Mat3_Mul(R, joint.R_fixed, R);
 
         if (joint.type != URDF_Joint_Type_FIXED)
         {
@@ -89,12 +91,12 @@ bool Class_URDF_Kinematics::Fkine(const float *q, uint8_t target_joint_idx, Stru
                 return false;
             }
             float Rj[9];
-            Alg_Mat3_Rodrigues(joint.axis, qi, Rj);
-            Alg_Mat3_Mul(R, Rj, R);
+            Mat3_Rodrigues(joint.axis, qi, Rj);
+            Mat3_Mul(R, Rj, R);
         }
     }
 
-    Alg_Pose_From_Mat3(P, R, pose);
+    Pose_From_Mat3(P, R, pose);
     Last_Pose = *pose;
     return true;
 }

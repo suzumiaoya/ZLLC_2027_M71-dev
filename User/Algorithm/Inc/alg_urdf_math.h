@@ -1,5 +1,5 @@
 /**
- * @file alg_math_3d.h
+ * @file alg_urdf_math.h
  * @author suzumiaoya
  * @brief Pure C++11 header-only 3D geometry & attitude utilities (row-major 3x3, no HAL/CMSIS deps)
  * @version V1.0
@@ -9,27 +9,22 @@
  *
  */
 
-#ifndef ALG_MATH_3D_H
-#define ALG_MATH_3D_H
+#ifndef ALG_URDF_MATH_H
+#define ALG_URDF_MATH_H
 
 /* Includes ------------------------------------------------------------------*/
 
 #include <cmath>
 #include <cstdint>
 
-/* Exported macros -----------------------------------------------------------*/
-
-static constexpr float ALG_MATH_3D_PI = 3.14159265358979323846f;
-static constexpr float ALG_MATH_3D_TWO_PI = 6.28318530717958647692f;
-
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief 通用 3D 位姿结构体
+ * @brief 通用 URDF 3D 位姿结构体
  * @note  R 为行主序 3x3 旋转矩阵；quat 为 [w, x, y, z]；rpy 为 URDF 标准 [roll, pitch, yaw]（ZYX 内旋）
  *
  */
-struct Struct_Pose_3D
+struct Struct_URDF_Pose
 {
     float pos[3];
     float R[9];
@@ -37,9 +32,17 @@ struct Struct_Pose_3D
     float rpy[3];
 };
 
-/* Exported function declarations / inline implementations -------------------*/
+namespace urdf_math
+{
 
-inline float Alg_Clamp_f(float val, float min_val, float max_val)
+/* Exported constants --------------------------------------------------------*/
+
+static constexpr float kPi = 3.14159265358979323846f;
+static constexpr float kTwoPi = 6.28318530717958647692f;
+
+/* Exported inline functions -------------------------------------------------*/
+
+inline float Clamp(float val, float min_val, float max_val)
 {
     if (val < min_val)
     {
@@ -52,26 +55,30 @@ inline float Alg_Clamp_f(float val, float min_val, float max_val)
     return val;
 }
 
-inline float Alg_Wrap_PI(float rad)
+/**
+ * @brief 将角度规范化至 (-pi, pi]；对 NaN/Inf 返回 0.0f 以杜绝上层循环死锁
+ *
+ */
+inline float Wrap_PI(float rad)
 {
     if (!std::isfinite(rad))
     {
         return 0.0f;
     }
-    float wrapped = remainderf(rad, ALG_MATH_3D_TWO_PI);
-    if (wrapped == -ALG_MATH_3D_PI)
+    float wrapped = remainderf(rad, kTwoPi);
+    if (wrapped == -kPi)
     {
-        wrapped = ALG_MATH_3D_PI;
+        wrapped = kPi;
     }
     return wrapped;
 }
 
-inline float Alg_Vec3_Dot(const float a[3], const float b[3])
+inline float Vec3_Dot(const float a[3], const float b[3])
 {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-inline void Alg_Vec3_Cross(const float a[3], const float b[3], float out[3])
+inline void Vec3_Cross(const float a[3], const float b[3], float out[3])
 {
     const float ox = a[1] * b[2] - a[2] * b[1];
     const float oy = a[2] * b[0] - a[0] * b[2];
@@ -81,14 +88,14 @@ inline void Alg_Vec3_Cross(const float a[3], const float b[3], float out[3])
     out[2] = oz;
 }
 
-inline void Alg_Mat3_Identity(float R[9])
+inline void Mat3_Identity(float R[9])
 {
     R[0] = 1.0f; R[1] = 0.0f; R[2] = 0.0f;
     R[3] = 0.0f; R[4] = 1.0f; R[5] = 0.0f;
     R[6] = 0.0f; R[7] = 0.0f; R[8] = 1.0f;
 }
 
-inline void Alg_Mat3_Transpose(const float A[9], float AT[9])
+inline void Mat3_Transpose(const float A[9], float AT[9])
 {
     if (A == AT)
     {
@@ -102,7 +109,11 @@ inline void Alg_Mat3_Transpose(const float A[9], float AT[9])
     AT[6] = A[2]; AT[7] = A[5]; AT[8] = A[8];
 }
 
-inline void Alg_Mat3_Mul(const float A[9], const float B[9], float C[9])
+/**
+ * @brief 行主序 3x3 矩阵乘法：C = A * B（内部使用临时缓冲，允许输出别名）
+ *
+ */
+inline void Mat3_Mul(const float A[9], const float B[9], float C[9])
 {
     float tmp[9];
     for (uint8_t r = 0; r < 3U; ++r)
@@ -121,7 +132,7 @@ inline void Alg_Mat3_Mul(const float A[9], const float B[9], float C[9])
     }
 }
 
-inline void Alg_Mat3_Transpose_Mul(const float A[9], const float B[9], float C[9])
+inline void Mat3_Transpose_Mul(const float A[9], const float B[9], float C[9])
 {
     float tmp[9];
     for (uint8_t r = 0; r < 3U; ++r)
@@ -139,7 +150,7 @@ inline void Alg_Mat3_Transpose_Mul(const float A[9], const float B[9], float C[9
     }
 }
 
-inline void Alg_Mat3_Mul_Vec3(const float A[9], const float v[3], float out[3])
+inline void Mat3_Mul_Vec3(const float A[9], const float v[3], float out[3])
 {
     const float o0 = A[0] * v[0] + A[1] * v[1] + A[2] * v[2];
     const float o1 = A[3] * v[0] + A[4] * v[1] + A[5] * v[2];
@@ -149,7 +160,7 @@ inline void Alg_Mat3_Mul_Vec3(const float A[9], const float v[3], float out[3])
     out[2] = o2;
 }
 
-inline void Alg_Mat3_Transpose_Mul_Vec3(const float A[9], const float v[3], float out[3])
+inline void Mat3_Transpose_Mul_Vec3(const float A[9], const float v[3], float out[3])
 {
     const float o0 = A[0] * v[0] + A[3] * v[1] + A[6] * v[2];
     const float o1 = A[1] * v[0] + A[4] * v[1] + A[7] * v[2];
@@ -159,7 +170,11 @@ inline void Alg_Mat3_Transpose_Mul_Vec3(const float A[9], const float v[3], floa
     out[2] = o2;
 }
 
-inline void Alg_Mat3_Rodrigues(const float axis[3], float angle, float R[9])
+/**
+ * @brief 罗德里格斯轴角旋转矩阵：假定 axis 为单位向量，angle 单位 rad
+ *
+ */
+inline void Mat3_Rodrigues(const float axis[3], float angle, float R[9])
 {
     const float c = cosf(angle);
     const float s = sinf(angle);
@@ -173,7 +188,11 @@ inline void Alg_Mat3_Rodrigues(const float axis[3], float angle, float R[9])
     R[6] = t * x * z - s * y;  R[7] = t * y * z + s * x;  R[8] = t * z * z + c;
 }
 
-inline void Alg_RPY_To_Mat3(const float rpy[3], float R[9])
+/**
+ * @brief URDF 标准 RPY [roll, pitch, yaw] 转行主序旋转矩阵 R = Rz(yaw) * Ry(pitch) * Rx(roll)
+ *
+ */
+inline void RPY_To_Mat3(const float rpy[3], float R[9])
 {
     const float cr = cosf(rpy[0]), sr = sinf(rpy[0]);
     const float cp = cosf(rpy[1]), sp = sinf(rpy[1]);
@@ -190,9 +209,9 @@ inline void Alg_RPY_To_Mat3(const float rpy[3], float R[9])
     R[8] = cp * cr;
 }
 
-inline void Alg_Mat3_To_RPY(const float R[9], float rpy[3])
+inline void Mat3_To_RPY(const float R[9], float rpy[3])
 {
-    const float sin_p = Alg_Clamp_f(-R[6], -1.0f, 1.0f);
+    const float sin_p = Clamp(-R[6], -1.0f, 1.0f);
     const float pitch = asinf(sin_p);
     const float cos_p = cosf(pitch);
 
@@ -211,7 +230,7 @@ inline void Alg_Mat3_To_RPY(const float R[9], float rpy[3])
     }
 }
 
-inline void Alg_Mat3_To_Quat(const float R[9], float quat[4])
+inline void Mat3_To_Quat(const float R[9], float quat[4])
 {
     // Shepperd 四分支法（全角度无奇异，避免 180° 除零 NaN）
     const float trace = R[0] + R[4] + R[8];
@@ -268,12 +287,12 @@ inline void Alg_Mat3_To_Quat(const float R[9], float quat[4])
     }
 }
 
-inline void Alg_Quat_To_Mat3(const float quat[4], float R[9])
+inline void Quat_To_Mat3(const float quat[4], float R[9])
 {
     const float norm = sqrtf(quat[0] * quat[0] + quat[1] * quat[1] + quat[2] * quat[2] + quat[3] * quat[3]);
     if (norm < 1e-9f)
     {
-        Alg_Mat3_Identity(R);
+        Mat3_Identity(R);
         return;
     }
 
@@ -294,7 +313,7 @@ inline void Alg_Quat_To_Mat3(const float quat[4], float R[9])
     R[8] = 1.0f - 2.0f * (x * x + y * y);
 }
 
-inline void Alg_Pose_From_Mat3(const float pos[3], const float R[9], Struct_Pose_3D *pose)
+inline void Pose_From_Mat3(const float pos[3], const float R[9], Struct_URDF_Pose *pose)
 {
     if (pose == nullptr)
     {
@@ -307,36 +326,38 @@ inline void Alg_Pose_From_Mat3(const float pos[3], const float R[9], Struct_Pose
     {
         pose->R[i] = R[i];
     }
-    Alg_Mat3_To_Quat(R, pose->quat);
-    Alg_Mat3_To_RPY(R, pose->rpy);
+    Mat3_To_Quat(R, pose->quat);
+    Mat3_To_RPY(R, pose->rpy);
 }
 
-inline Struct_Pose_3D Alg_Make_Pose_From_RPY(const float pos[3], const float rpy[3])
+inline Struct_URDF_Pose Make_Pose_From_RPY(const float pos[3], const float rpy[3])
 {
-    Struct_Pose_3D pose{};
+    Struct_URDF_Pose pose{};
     pose.pos[0] = pos[0];
     pose.pos[1] = pos[1];
     pose.pos[2] = pos[2];
-    Alg_RPY_To_Mat3(rpy, pose.R);
-    Alg_Mat3_To_Quat(pose.R, pose.quat);
+    RPY_To_Mat3(rpy, pose.R);
+    Mat3_To_Quat(pose.R, pose.quat);
     pose.rpy[0] = rpy[0];
     pose.rpy[1] = rpy[1];
     pose.rpy[2] = rpy[2];
     return pose;
 }
 
-inline Struct_Pose_3D Alg_Make_Pose_From_Quat(const float pos[3], const float quat[4])
+inline Struct_URDF_Pose Make_Pose_From_Quat(const float pos[3], const float quat[4])
 {
-    Struct_Pose_3D pose{};
+    Struct_URDF_Pose pose{};
     pose.pos[0] = pos[0];
     pose.pos[1] = pos[1];
     pose.pos[2] = pos[2];
-    Alg_Quat_To_Mat3(quat, pose.R);
-    Alg_Mat3_To_Quat(pose.R, pose.quat);
-    Alg_Mat3_To_RPY(pose.R, pose.rpy);
+    Quat_To_Mat3(quat, pose.R);
+    Mat3_To_Quat(pose.R, pose.quat);
+    Mat3_To_RPY(pose.R, pose.rpy);
     return pose;
 }
 
-#endif // ALG_MATH_3D_H
+} // namespace urdf_math
+
+#endif // ALG_URDF_MATH_H
 
 /************************ COPYRIGHT(C) ZLLC 2027 ******************************/
