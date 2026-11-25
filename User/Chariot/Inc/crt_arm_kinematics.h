@@ -69,6 +69,7 @@ private:
     float Wrist_Singularity_Eps = 1e-4f;
 
     // 由 RoboticArm_URDF_Model 在 Init() 阶段预计算的 Pieper 几何不变量（避免运行时重复三角/矩阵推导，保持零硬编码）
+    float Axis_Sign[RoboticArm_URDF_DOF] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}; // 各关节 URDF 旋转轴 Z 分量符号 ±1，将解析解统一在规范 +Z 空间求解再还原
     float d1_z = 0.0f;          // J1 原点 Z 向高度偏置 (m)
     float dy2 = 0.0f;           // J2 原点相对 L1 的 Y 向横向偏置 (m)
     float dz2 = 0.0f;           // J2 原点相对 L1 的 Z 向高度偏置 (m)

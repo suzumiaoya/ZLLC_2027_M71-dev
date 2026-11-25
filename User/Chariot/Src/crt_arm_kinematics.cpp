@@ -103,6 +103,11 @@ void Class_RoboticArm_Kinematics::Init()
     dz2 = j2.xyz[2];
     L2 = j3.xyz[0];
 
+    for (uint8_t i = 0U; i < RoboticArm_URDF_DOF; ++i)
+    {
+        Axis_Sign[i] = (Model->joints[i].axis[2] >= 0.0f) ? 1.0f : -1.0f;
+    }
+
     // 腕心位于 J4/J5/J6 交点（L5 原点），将其折算到 L3 坐标系：p_wc_in_3 = J4.xyz + J4.R_fixed * J5.xyz
     float j5_in_3[3];
     Mat3_Mul_Vec3(j4.R_fixed, j5.xyz, j5_in_3);
@@ -243,7 +248,7 @@ bool Class_RoboticArm_Kinematics::Ikine(const Struct_URDF_Pose &target_pose,
         P_0_6[2] + dp_wc[2],
     };
 
-    // 2. 求解 q1（肩左 / 肩右两支）：由 px*sin(q1) + py*cos(q1) = Y1_const 精确消去横向偏置
+    // 2. 在规范 +Z 旋转空间求解 q1t（px*sin(q1t) - py*cos(q1t) = -Y1_const 消去横向偏置），再按 Axis_Sign[0] 还原 q1
     const float r_xy = hypotf(P_wc[0], P_wc[1]);
     if (r_xy + 1e-6f < fabsf(Y1_const))
     {
@@ -263,9 +268,9 @@ bool Class_RoboticArm_Kinematics::Ikine(const Struct_URDF_Pose &target_pose,
         phi = atan2f(P_wc[1], P_wc[0]);
     }
     const float alpha = asinf(sin_val);
-    const float q1_cands[2] = {
-        Wrap_PI(alpha - phi),
-        Wrap_PI(kPi - alpha - phi),
+    const float q1t_cands[2] = {
+        Wrap_PI(phi - alpha),
+        Wrap_PI(phi + alpha - kPi),
     };
 
     const float Z1_rel = P_wc[2] - d1_z - dz2;
@@ -278,8 +283,9 @@ bool Class_RoboticArm_Kinematics::Ikine(const Struct_URDF_Pose &target_pose,
 
     for (uint8_t b1 = 0U; b1 < 2U; ++b1)
     {
-        const float q1 = q1_cands[b1];
-        const float X1 = P_wc[0] * cosf(q1) - P_wc[1] * sinf(q1);
+        const float q1t = q1t_cands[b1];
+        const float q1 = Wrap_PI(Axis_Sign[0] * q1t);
+        const float X1 = P_wc[0] * cosf(q1t) + P_wc[1] * sinf(q1t);
         const float r2_sq = X1 * X1 + Z1_rel * Z1_rel;
 
         // 3. 肩臂平面余弦定理求解肘上 / 肘下两组 (q2, q3)
@@ -298,14 +304,16 @@ bool Class_RoboticArm_Kinematics::Ikine(const Struct_URDF_Pose &target_pose,
         const float s3_signs[2] = {1.0f, -1.0f};
         for (uint8_t b3 = 0U; b3 < 2U; ++b3)
         {
-            const float q3 = Wrap_PI(elbow_beta + s3_signs[b3] * acos_v);
-            const float c3 = cosf(q3);
-            const float s3 = sinf(q3);
+            const float q3t = Wrap_PI(elbow_beta + s3_signs[b3] * acos_v);
+            const float c3 = cosf(q3t);
+            const float s3 = sinf(q3t);
             const float x2 = L2 - ux * s3 - uy * c3;
             const float y2 = ux * c3 - uy * s3;
-            const float q2 = atan2f(x2 * Z1_rel + y2 * X1, -x2 * X1 + y2 * Z1_rel);
+            const float q2t = atan2f(x2 * Z1_rel + y2 * X1, -x2 * X1 + y2 * Z1_rel);
+            const float q2 = Wrap_PI(Axis_Sign[1] * q2t);
+            const float q3 = Wrap_PI(Axis_Sign[2] * q3t);
 
-            // 4. 求解球腕 (q4, q5, q6)：R_w = Rf4^T * R_0_3^T * R_0_6 = Rz(q4) * Ry(-q5) * Rz(pi - q6)
+            // 4. 在规范 +Z 空间求解球腕 (q4t, q5t, q6t)：R_w = Rf4^T * R_0_3^T * R_0_6 = Rz(q4t) * Ry(-q5t) * Rz(pi + q6t)
             float R_0_3[9];
             Compute_R_0_3(q1, q2, q3, R_0_3);
 
@@ -330,17 +338,22 @@ bool Class_RoboticArm_Kinematics::Ikine(const Struct_URDF_Pose &target_pose,
                 is_singular = true;
                 wrist_num = 1U;
                 const float q4_lock = Clamp(q_ref_safe[3], Model->joints[3].q_min, Model->joints[3].q_max);
-                wrist_cands[0][0] = q4_lock;
+                const float q4t = Axis_Sign[3] * q4_lock;
+                float q5t = 0.0f;
+                float q6t = 0.0f;
                 if (c5 >= 0.0f)
                 {
-                    wrist_cands[0][1] = 0.0f;
-                    wrist_cands[0][2] = Wrap_PI(q4_lock - atan2f(-R_w[3], -R_w[0]));
+                    q5t = 0.0f;
+                    q6t = Wrap_PI(atan2f(-R_w[3], -R_w[0]) - q4t);
                 }
                 else
                 {
-                    wrist_cands[0][1] = kPi;
-                    wrist_cands[0][2] = Wrap_PI(atan2f(R_w[3], R_w[0]) - q4_lock);
+                    q5t = kPi;
+                    q6t = Wrap_PI(q4t - atan2f(R_w[3], R_w[0]));
                 }
+                wrist_cands[0][0] = q4_lock;
+                wrist_cands[0][1] = Wrap_PI(Axis_Sign[4] * q5t);
+                wrist_cands[0][2] = Wrap_PI(Axis_Sign[5] * q6t);
             }
             else
             {
@@ -349,9 +362,12 @@ bool Class_RoboticArm_Kinematics::Ikine(const Struct_URDF_Pose &target_pose,
                 for (uint8_t w = 0U; w < 2U; ++w)
                 {
                     const float sign5 = s5_signs[w];
-                    wrist_cands[w][0] = atan2f(-sign5 * R_w[5], -sign5 * R_w[2]);
-                    wrist_cands[w][1] = sign5 * q5_abs;
-                    wrist_cands[w][2] = atan2f(-sign5 * R_w[7], -sign5 * R_w[6]);
+                    const float q4t = atan2f(-sign5 * R_w[5], -sign5 * R_w[2]);
+                    const float q5t = sign5 * q5_abs;
+                    const float q6t = atan2f(sign5 * R_w[7], -sign5 * R_w[6]);
+                    wrist_cands[w][0] = Wrap_PI(Axis_Sign[3] * q4t);
+                    wrist_cands[w][1] = Wrap_PI(Axis_Sign[4] * q5t);
+                    wrist_cands[w][2] = Wrap_PI(Axis_Sign[5] * q6t);
                 }
             }
 

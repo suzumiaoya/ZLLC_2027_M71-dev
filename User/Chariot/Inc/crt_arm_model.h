@@ -32,7 +32,7 @@ const Struct_URDF_Joint RoboticArm_URDF_Joints[RoboticArm_URDF_JOINT_NUM] = {
             0.0f, 1.0f, 0.0f,
             0.0f, 0.0f, 1.0f
         },
-        {0.0f, 0.0f, -1.0f},
+        {0.0f, 0.0f, 1.0f},
         -0.78539f,
         1.5708f,
         1.29562898f,
@@ -117,7 +117,7 @@ const Struct_URDF_Joint RoboticArm_URDF_Joints[RoboticArm_URDF_JOINT_NUM] = {
             -1.0f, 1.21904419e-29f, 3.49148134e-15f,
             0.0f, 1.0f, -3.49148134e-15f
         },
-        {0.0f, 0.0f, -1.0f},
+        {0.0f, 0.0f, 1.0f},
         -6.28f,
         6.28f,
         0.182901343f,
