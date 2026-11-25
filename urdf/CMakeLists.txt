@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 
-project(M71_predev)
+project(M71_predev_with_mass)
 
 find_package(catkin REQUIRED)
 

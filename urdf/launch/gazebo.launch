@@ -10,7 +10,7 @@
     name="spawn_model"
     pkg="gazebo_ros"
     type="spawn_model"
-    args="-file $(find M71_predev)/urdf/M71_predev.urdf -urdf -model M71_predev"
+    args="-file $(find M71_predev_with_mass)/urdf/M71_predev_with_mass.urdf -urdf -model M71_predev_with_mass"
     output="screen" />
   <node
     name="fake_joint_calibration"

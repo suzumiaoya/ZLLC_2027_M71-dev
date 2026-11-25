@@ -1,10 +1,10 @@
 <package format="2">
-  <name>M71_predev</name>
+  <name>M71_predev_with_mass</name>
   <version>1.0.0</version>
   <description>
-    <p>URDF Description package for M71_predev</p>
+    <p>URDF Description package for M71_predev_with_mass</p>
     <p>This package contains configuration data, 3D models and launch files
-for M71_predev robot</p>
+for M71_predev_with_mass robot</p>
   </description>
   <author>TODO</author>
   <maintainer email="TODO@email.com" />
